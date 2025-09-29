@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Socio-Economica - Provincia di Pesaro e Urbino 2024</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f97316', // orange-500
+                        secondary: '#06b6d4', // cyan-500
+                        accent: '#ec4899', // pink-500
+                        success: '#10b981', // emerald-500
+                        dark: {
+                            bg: '#0f172a', // slate-900
+                            card: '#1e293b', // slate-800
+                            border: '#334155' // slate-600
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-600 px-6 py-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-4 lg:mb-0">
+                <h1 class="text-2xl lg:text-3xl font-bold text-white">
+                    Dashboard Socio-Economica
+                </h1>
+                <p class="text-slate-300 text-sm lg:text-base">
+                    Provincia di Pesaro e Urbino - Anno 2024
+                </p>
+            </div>
+            
+            <!-- KPI Row -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                <div class="bg-slate-700 px-3 py-2 rounded-lg">
+                    <div class="text-lg font-bold text-primary" id="kpi-popolazione">349.882</div>
+                    <div class="text-xs text-slate-300">Popolazione</div>
+                </div>
+                <div class="bg-slate-700 px-3 py-2 rounded-lg">
+                    <div class="text-lg font-bold text-secondary" id="kpi-occupazione">70.1%</div>
+                    <div class="text-xs text-slate-300">Tasso Occupazione</div>
+                </div>
+                <div class="bg-slate-700 px-3 py-2 rounded-lg">
+                    <div class="text-lg font-bold text-accent" id="kpi-pensionati">98.502</div>
+                    <div class="text-xs text-slate-300">Pensionati</div>
+                </div>
+                <div class="bg-slate-700 px-3 py-2 rounded-lg">
+                    <div class="text-lg font-bold text-success" id="kpi-entrate">+4.5%</div>
+                    <div class="text-xs text-slate-300">Crescita Entrate</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-slate-800 border-b border-slate-600">
+        <div class="px-6">
+            <div class="flex flex-wrap gap-1 lg:gap-2">
+                <button class="tab-button active" data-section="demografia">
+                    <span class="hidden sm:inline">Panorama </span>Demografico
+                </button>
+                <button class="tab-button" data-section="mercato_lavoro">
+                    <span class="hidden sm:inline">Mercato del </span>Lavoro
+                </button>
+                <button class="tab-button" data-section="entrate_vigilanza">
+                    <span class="hidden sm:inline">Entrate e </span>Vigilanza
+                </button>
+                <button class="tab-button" data-section="ammortizzatori">
+                    Ammortizzatori
+                </button>
+                <button class="tab-button" data-section="pensioni">
+                    Pensioni
+                </button>
+                <button class="tab-button" data-section="assistenza">
+                    <span class="hidden sm:inline">Prestazioni </span>Assistenziali
+                </button>
+                <button class="tab-button" data-section="relazioni_utenza">
+                    <span class="hidden sm:inline">Relazioni </span>Utenza
+                </button>
+                <button class="tab-button" data-section="organizzazione">
+                    Organizzazione
+                </button>
+                <button class="tab-button" data-section="contenzioso">
+                    Contenzioso
+                </button>
+                <button class="tab-button" data-section="patrimonio">
+                    Patrimonio
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Loading Indicator -->
+        <div id="loading" class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+        </div>
+
+        <!-- Content Sections -->
+        <div id="content" class="hidden">
+            <!-- Demografia Section -->
+            <section id="demografia" class="section-content active">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Panorama Sociodemografico</h2>
+                    <p class="text-slate-300 mb-6">
+                        Analisi della popolazione, dinamiche demografiche, flussi migratori e indicatori di longevità
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Popolazione Card -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Distribuzione Popolazione 2024</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-popolazione" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Saldo Naturale Card -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Andamento Saldo Naturale</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-saldo-naturale" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Longevità Card -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Speranza di Vita</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-longevita" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Flussi Migratori Card -->
+                    <div class="card zoomable lg:col-span-2">
+                        <div class="card-header">
+                            <h3 class="card-title">Flussi Migratori e Saldo Demografico</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-flussi-migratori" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Demografia Stats Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Indicatori Demografici</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="space-y-4">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Popolazione Totale</span>
+                                    <span class="font-bold text-primary">349.882</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Femmine</span>
+                                    <span class="font-bold">50.8%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Maschi</span>
+                                    <span class="font-bold">49.2%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">0-14 anni</span>
+                                    <span class="font-bold text-secondary">11.8%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">15-64 anni</span>
+                                    <span class="font-bold text-success">63.0%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">65+ anni</span>
+                                    <span class="font-bold text-accent">25.3%</span>
+                                </div>
+                                <div class="border-t border-slate-600 pt-4">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-300">Saldo Demografico 2023</span>
+                                        <span class="font-bold text-red-400">-778</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mercato del Lavoro Section -->
+            <section id="mercato_lavoro" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Mercato del Lavoro</h2>
+                    <p class="text-slate-300 mb-6">
+                        Analisi dell'occupazione, assunzioni, cessazioni, retribuzioni e indicatori del mercato del lavoro
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Lavoratori per Categoria -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Lavoratori per Categoria</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-lavoratori-categoria" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tasso di Occupazione -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Tasso di Occupazione</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-tasso-occupazione" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Assunzioni vs Cessazioni -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Assunzioni vs Cessazioni 2024</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-assunzioni-cessazioni" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Retribuzioni Medie -->
+                    <div class="card zoomable lg:col-span-2">
+                        <div class="card-header">
+                            <h3 class="card-title">Retribuzioni Medie per Settore</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-retribuzioni" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Lavoro Stats -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Indicatori Occupazionali</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="space-y-4">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Occupati Totali</span>
+                                    <span class="font-bold text-success">159.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Tasso Occupazione</span>
+                                    <span class="font-bold text-primary">70.1%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Tasso Disoccupazione</span>
+                                    <span class="font-bold text-secondary">3.7%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Part Time</span>
+                                    <span class="font-bold">26.8%</span>
+                                </div>
+                                <div class="border-t border-slate-600 pt-4">
+                                    <div class="text-sm text-slate-400 mb-2">Confronto Italia:</div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Occupazione</span>
+                                        <span class="text-success">+7.9pp</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Disoccupazione</span>
+                                        <span class="text-success">-2.8pp</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Entrate e Vigilanza Section -->
+            <section id="entrate_vigilanza" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Entrate Contributive e Vigilanza</h2>
+                    <p class="text-slate-300 mb-6">
+                        Riscossioni contributive, recupero crediti, attività di vigilanza e regolarità contributiva
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Entrate Contributive -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Entrate Contributive</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-entrate-contributive" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Vigilanza Ispettiva -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Vigilanza Ispettiva</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-vigilanza-ispettiva" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- DURC -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">DURC - Regolarità Contributiva</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-durc" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ammortizzatori Section -->
+            <section id="ammortizzatori" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Ammortizzatori Sociali</h2>
+                    <p class="text-slate-300 mb-6">
+                        NASpI, Cassa Integrazione, beneficiari e tempi di erogazione delle prestazioni
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- NASpI -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">NASpI - Evoluzione</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-naspi" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CIG -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Cassa Integrazione - Ore</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-cig" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tempi Erogazione -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Tempi di Erogazione</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-tempi-erogazione" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pensioni Section -->
+            <section id="pensioni" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Prestazioni Pensionistiche</h2>
+                    <p class="text-slate-300 mb-6">
+                        Pensioni vigenti e liquidate, importi medi, anticipazioni pensionistiche
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Pensioni per Gestione -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Pensioni per Gestione</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-pensioni-gestione" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Importi Medi -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Importi Medi per Genere</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-importi-medi" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Anticipazioni -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Anticipazioni Pensionistiche</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-anticipazioni" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Assistenza Section -->
+            <section id="assistenza" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Prestazioni Assistenziali</h2>
+                    <p class="text-slate-300 mb-6">
+                        Invalidità civile, misure di sostegno al reddito, assegno unico universale
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Invalidità Civile -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Invalidità Civile</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-invalidita-civile" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Sostegno Reddito -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Misure Sostegno Reddito</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-sostegno-reddito" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Assegno Unico -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Assegno Unico Universale</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-assegno-unico" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Relazioni Utenza Section -->
+            <section id="relazioni_utenza" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Relazioni con l'Utenza</h2>
+                    <p class="text-slate-300 mb-6">
+                        Canali di accesso, informazioni, consulenze, comunicazioni digitali
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Canali Accesso -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Canali di Accesso</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-canali-accesso" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Cassetto Bidirezionale -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Comunicazioni Digitali</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-cassetto-bidirezionale" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- PEC -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Flusso PEC</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-pec" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Organizzazione Section -->
+            <section id="organizzazione" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Organizzazione e Risorse Umane</h2>
+                    <p class="text-slate-300 mb-6">
+                        Distribuzione territoriale, personale INPS, strutture di supporto
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Personale -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Personale INPS</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-personale" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Strutture Territoriali -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Strutture Territoriali</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-strutture" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Età Media -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Evoluzione Età Media</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-eta-media" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contenzioso Section -->
+            <section id="contenzioso" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Contenzioso</h2>
+                    <p class="text-slate-300 mb-6">
+                        Contenzioso amministrativo, giudiziario ordinario e ATP invalidità civile
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Contenzioso Amministrativo -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Contenzioso Amministrativo</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-contenzioso-amm" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Contenzioso Giudiziario -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Contenzioso Giudiziario</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-contenzioso-giud" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- ATP Invalidità -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">ATP Invalidità Civile</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-atp-invalidita" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Patrimonio Section -->
+            <section id="patrimonio" class="section-content">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-primary">Patrimonio a Reddito</h2>
+                    <p class="text-slate-300 mb-6">
+                        Patrimonio immobiliare da reddito e distribuzione territoriale
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Valore Patrimonio -->
+                    <div class="card zoomable">
+                        <div class="card-header">
+                            <h3 class="card-title">Valore Patrimonio Immobiliare</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="chart-patrimonio-valore" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Distribuzione -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Composizione Patrimonio</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="space-y-4">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Valore Totale</span>
+                                    <span class="font-bold text-primary">€13.8M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Numero Fabbricati</span>
+                                    <span class="font-bold">4</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">Unità Agricole</span>
+                                    <span class="font-bold">0</span>
+                                </div>
+                                <div class="border-t border-slate-600 pt-4">
+                                    <div class="text-sm text-slate-400 mb-2">% su Regione Marche:</div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Valore</span>
+                                        <span class="text-secondary">47.3%</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Fabbricati</span>
+                                        <span class="text-secondary">5.4%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Zoom Overlay -->
+    <div id="zoom-overlay" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center p-4">
+        <div id="zoomed-card" class="bg-slate-800 rounded-lg max-w-4xl max-h-[90vh] overflow-auto">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+MIT License
+
+Copyright (c) 2024 INPS - Istituto Nazionale della Previdenza Sociale
+Provincia di Pesaro e Urbino
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Utilizzo dei Dati
+
+I dati contenuti in questa dashboard provengono dal Rapporto Socio-Economico 
+della Provincia di Pesaro e Urbino 2024 e sono di proprietà dell'INPS 
+(Istituto Nazionale della Previdenza Sociale).
+
+### Condizioni d'Uso dei Dati:
+
+1. **Fonte**: I dati devono essere sempre attribuiti all'INPS - Provincia di Pesaro e Urbino
+2. **Scopo**: Utilizzo per finalità di studio, ricerca e informazione pubblica
+3. **Integrità**: I dati non devono essere modificati o alterati nel loro significato
+4. **Aggiornamento**: Fare riferimento alla data di aggiornamento indicata nella dashboard
+
+### Disclaimer:
+
+- I dati sono aggiornati al periodo indicato nei metadati della dashboard
+- L'INPS non garantisce l'accuratezza assoluta delle elaborazioni
+- Per dati ufficiali fare sempre riferimento alle pubblicazioni INPS ufficiali
+- La dashboard è un strumento di visualizzazione e non sostituisce i documenti ufficiali
+
+### Contatti:
+
+Per informazioni sui dati o correzioni:
+- INPS Sede Provinciale di Pesaro e Urbino
+- Email: [email ufficiale INPS]
+- Sito web: www.inps.it
+
+---
+
+## Attribuzione Tecnologica
+
+Questa dashboard utilizza le seguenti tecnologie open source:
+
+- **Chart.js** - MIT License (https://www.chartjs.org/)
+- **Tailwind CSS** - MIT License (https://tailwindcss.com/)
+- **Python** - PSF License (https://www.python.org/)
+
+Si ringrazia la comunità open source per aver reso possibile questo progetto.
