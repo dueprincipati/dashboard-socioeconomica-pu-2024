@@ -52,6 +52,30 @@ class Dashboard {
                 this.closeZoom();
             }
         });
+
+        // Internal tabs for demografia section
+        document.querySelectorAll('.tab-btn-demo').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tab = e.target.dataset.demoTab;
+                this.switchDemografiaTab(tab);
+            });
+        });
+
+        // Internal tabs for mercato del lavoro section
+        document.querySelectorAll('.tab-btn-lavoro').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tab = e.target.dataset.lavoroTab;
+                this.switchLavoroTab(tab);
+            });
+        });
+
+        // Internal tabs for contenzioso section
+        document.querySelectorAll('.tab-btn-contenzioso').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tab = e.target.dataset.contenziosoTab;
+                this.switchContenziosoTab(tab);
+            });
+        });
     }
 
     switchSection(sectionName) {
@@ -105,6 +129,66 @@ class Dashboard {
         if (this.zoomedChart) {
             this.zoomedChart.destroy();
             this.zoomedChart = null;
+        }
+    }
+
+    switchDemografiaTab(tabName) {
+        // Update active tab button
+        document.querySelectorAll('.tab-btn-demo').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-demo-tab="${tabName}"]`).classList.add('active');
+
+        // Update active tab content
+        document.querySelectorAll('.demo-tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.classList.add('hidden');
+        });
+        
+        const activeTab = document.getElementById(`demo-${tabName}`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+            activeTab.classList.remove('hidden');
+        }
+    }
+
+    switchLavoroTab(tabName) {
+        // Update active tab button
+        document.querySelectorAll('.tab-btn-lavoro').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-lavoro-tab="${tabName}"]`).classList.add('active');
+
+        // Update active tab content
+        document.querySelectorAll('.lavoro-tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.classList.add('hidden');
+        });
+        
+        const activeTab = document.getElementById(`lavoro-${tabName}`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+            activeTab.classList.remove('hidden');
+        }
+    }
+
+    switchContenziosoTab(tabName) {
+        // Update active tab button
+        document.querySelectorAll('.tab-btn-contenzioso').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-contenzioso-tab="${tabName}"]`).classList.add('active');
+
+        // Update active tab content
+        document.querySelectorAll('.contenzioso-tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.classList.add('hidden');
+        });
+        
+        const activeTab = document.getElementById(`contenzioso-${tabName}`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+            activeTab.classList.remove('hidden');
         }
     }
 
@@ -631,378 +715,511 @@ class Dashboard {
     }
 
     loadAmmortizzatoriCharts() {
-        // NASpI evoluzione
-        const naspiData = dashboardData.ammortizzatori.naspi.evoluzione;
-        this.createChart('chart-naspi', {
-            type: 'line',
-            data: {
-                labels: naspiData.map(d => d.anno),
+        // Setup tabs functionality
+        this.setupAmmortizzatoriTabs();
+
+        // Chart colors
+        const colors = {
+            pink: '#ec4899',
+            sky: '#06b6d4',
+            purple: '#8b5cf6',
+            teal: '#14b8a6',
+            orange: '#f97316',
+            green: '#10b981',
+            red: '#ef4444'
+        };
+
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        const years = ['2022', '2023', '2024'];
+        
+        // --- CESSAZIONE RAPPORTO ---
+        this.createChart('naspiGenderChart', {
+            type: 'bar', 
+            data: { 
+                labels: years, 
+                datasets: [ 
+                    { label: 'Femmine', data: [8934, 8900, 9379], backgroundColor: colors.pink, borderRadius: 5 }, 
+                    { label: 'Maschi', data: [5806, 6367, 7016], backgroundColor: colors.sky, borderRadius: 5 } 
+                ] 
+            }, 
+            options: commonOptions 
+        });
+        
+        this.createChart('benefitsTypeChart', {
+            type: 'bar', 
+            data: { 
+                labels: ['2023', '2024'], 
+                datasets: [ 
+                    { label: 'NASpI', data: [19543, 20464], backgroundColor: colors.purple, borderRadius: 5 }, 
+                    { label: 'Disoccupazione Agricola', data: [937, 902], backgroundColor: colors.teal, borderRadius: 5 }, 
+                    { label: 'Dis-coll', data: [110, 126], backgroundColor: colors.orange, borderRadius: 5 } 
+                ] 
+            }, 
+            options: commonOptions
+        });
+        
+        this.createChart('naspiTimingChart', {
+            type: 'doughnut', 
+            data: { 
+                labels: ['Entro 15 gg', 'Oltre 15 gg'], 
                 datasets: [{
-                    label: 'Femmine',
-                    data: naspiData.map(d => d.femmine),
-                    borderColor: this.colors.accent,
-                    backgroundColor: this.colors.accent + '20',
-                    tension: 0.4
-                }, {
-                    label: 'Maschi',
-                    data: naspiData.map(d => d.maschi),
-                    borderColor: this.colors.secondary,
-                    backgroundColor: this.colors.secondary + '20',
-                    tension: 0.4
-                }, {
-                    label: 'Totale',
-                    data: naspiData.map(d => d.totale),
-                    borderColor: this.colors.primary,
-                    backgroundColor: this.colors.primary + '20',
-                    tension: 0.4,
-                    borderWidth: 3
-                }]
-            },
+                    data: [88.5, 11.5], 
+                    backgroundColor: [colors.green, colors.red], 
+                    borderColor: '#1e293b' 
+                }] 
+            }, 
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { position: 'bottom', labels: { color: '#cbd5e1' }}, 
+                    tooltip: {callbacks: {label: (c) => `${c.label}: ${c.raw}%`}}
                 }
             }
         });
 
-        // CIG ore utilizzate
-        const cigData = dashboardData.ammortizzatori.cig.evoluzione;
-        this.createChart('chart-cig', {
-            type: 'bar',
-            data: {
-                labels: cigData.map(d => d.anno),
-                datasets: [{
-                    label: 'CIGO',
-                    data: cigData.map(d => d.cigo),
-                    backgroundColor: this.colors.primary
-                }, {
-                    label: 'CIGS',
-                    data: cigData.map(d => d.cigs),
-                    backgroundColor: this.colors.secondary
-                }, {
-                    label: 'FIS',
-                    data: cigData.map(d => d.fis),
-                    backgroundColor: this.colors.accent
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: true, ticks: { color: '#e2e8f0' }, grid: { color: '#334155' } },
-                    y: { 
-                        stacked: true, 
-                        beginAtZero: true,
-                        ticks: { 
-                            color: '#e2e8f0',
-                            callback: function(value) { return (value / 1000000).toFixed(1) + 'M'; }
-                        },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
+        // --- SOSPENSIONE RAPPORTO ---
+        this.createChart('cigHoursChart', {
+            type: 'line', 
+            data: { 
+                labels: ['2021', '2022', '2023', '2024'], 
+                datasets: [ 
+                    { label: 'CIGO', data: [1233742, 365795, 720750, 681287], borderColor: colors.sky, tension: 0.3 }, 
+                    { label: 'CIGS', data: [115336, 126111, 97009, 437841], borderColor: colors.pink, tension: 0.3 }, 
+                    { label: 'Fondi Solidarietà', data: [1014495, 90184, 17793, 4034], borderColor: colors.green, tension: 0.3 } 
+                ] 
+            }, 
+            options: commonOptions 
+        });
+        
+        this.createChart('cigBeneficiariesChart', {
+            type: 'bar', 
+            data: { 
+                labels: ['2023', '2024'], 
+                datasets: [ 
+                    { label: 'CIGO', data: [7694, 7293], backgroundColor: colors.sky, borderRadius: 5 }, 
+                    { label: 'CIGS', data: [1025, 1987], backgroundColor: colors.pink, borderRadius: 5 }, 
+                    { label: 'Fondi Solidarietà', data: [130, 72], backgroundColor: colors.green, borderRadius: 5 } 
+                ] 
+            }, 
+            options: commonOptions 
         });
 
-        // Tempi di erogazione
-        const tempiData = dashboardData.ammortizzatori.tempi_erogazione;
-        this.createChart('chart-tempi-erogazione', {
-            type: 'bar',
-            data: {
-                labels: ['CIGO 2023', 'CIGO 2024', 'FIS 2023', 'FIS 2024'],
-                datasets: [{
-                    label: 'Pesaro e Urbino',
-                    data: [tempiData.cigo[2023], tempiData.cigo[2024], tempiData.fis[2023], tempiData.fis[2024]],
-                    backgroundColor: this.colors.primary
-                }, {
-                    label: 'Italia',
-                    data: [33, tempiData.cigo.confronti_2024.italia, 122, tempiData.fis.confronti_2024.italia],
-                    backgroundColor: this.colors.secondary
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { 
-                            color: '#e2e8f0',
-                            callback: function(value) { return value + ' gg'; }
-                        },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
+        this.createChart('erogationTimingChart', {
+            type: 'bar', 
+            data: { 
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'], 
+                datasets: [
+                    { label: 'CIGO (gg)', data: [11, 12, 21], backgroundColor: colors.purple, borderRadius: 5 }, 
+                    { label: 'FIS (gg)', data: [52, 41, 78], backgroundColor: colors.teal, borderRadius: 5 }
+                ] 
+            }, 
+            options: commonOptions 
+        });
+    }
+
+    setupAmmortizzatoriTabs() {
+        const tabs = document.querySelectorAll('#ammortizzatori .tab-btn');
+        const contents = document.querySelectorAll('#ammortizzatori .tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
         });
     }
 
     loadPensioniCharts() {
-        // Pensioni per gestione
-        const pensioniData = dashboardData.pensioni.pensioni_vigenti.per_gestione;
-        this.createChart('chart-pensioni-gestione', {
-            type: 'doughnut',
-            data: {
-                labels: ['Fondo Dipendenti', 'Dipendenti Pubblici', 'Lavoratori Autonomi', 'Altre Previdenziali'],
-                datasets: [{
-                    data: [
-                        pensioniData.fondo_lavoratori_dipendenti.totale,
-                        pensioniData.dipendenti_pubblici.totale,
-                        pensioniData.lavoratori_autonomi.totale,
-                        pensioniData.altre_previdenziali.totale
-                    ],
-                    backgroundColor: this.colors.chart.slice(0, 4),
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0', fontSize: 10 }
-                    }
-                }
-            }
-        });
+        // Setup tabs functionality
+        this.setupPensioniTabs();
 
-        // Importi medi per genere
-        const importiData = dashboardData.pensioni.importi_medi_vigenti.confronto_territori;
-        this.createChart('chart-importi-medi', {
-            type: 'bar',
-            data: {
-                labels: ['Fondo Dipendenti', 'Dipendenti Pubblici', 'Lavoratori Autonomi'],
-                datasets: [{
-                    label: 'Femmine PU',
-                    data: [
-                        importiData.pesaro_urbino.fondo_dipendenti.femmine,
-                        importiData.pesaro_urbino.dipendenti_pubblici.femmine,
-                        importiData.pesaro_urbino.lavoratori_autonomi.femmine
-                    ],
-                    backgroundColor: this.colors.accent
-                }, {
-                    label: 'Maschi PU',
-                    data: [
-                        importiData.pesaro_urbino.fondo_dipendenti.maschi,
-                        importiData.pesaro_urbino.dipendenti_pubblici.maschi,
-                        importiData.pesaro_urbino.lavoratori_autonomi.maschi
-                    ],
-                    backgroundColor: this.colors.secondary
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { 
-                            color: '#e2e8f0',
-                            callback: function(value) { return '€' + value; }
-                        },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
+        // Chart colors
+        const colors = {
+            orange: '#fb923c',
+            sky: '#38bdf8',
+            teal: '#2dd4bf',
+            pink: '#f472b6',
+            red: '#f87171',
+            purple: '#c084fc',
+            green: '#4ade80'
+        };
 
-        // Anticipazioni pensionistiche
-        const anticipazioniData = dashboardData.pensioni.anticipazioni_pensionistiche;
-        this.createChart('chart-anticipazioni', {
-            type: 'bar',
-            data: {
-                labels: ['Opzione Donna 2022', 'Opzione Donna 2023', 'Opzione Donna 2024', 'Quota 103 2023', 'Quota 103 2024', 'APE Sociale 2024'],
-                datasets: [{
-                    label: 'Domande Accolte',
-                    data: [
-                        anticipazioniData.opzione_donna[2022],
-                        anticipazioniData.opzione_donna[2023],
-                        anticipazioniData.opzione_donna[2024],
-                        anticipazioniData.quota_103[2023].totale,
-                        anticipazioniData.quota_103[2024].totale,
-                        anticipazioniData.ape_sociale[2024]
-                    ],
-                    backgroundColor: [
-                        this.colors.accent,
-                        this.colors.accent,
-                        this.colors.accent,
-                        this.colors.primary,
-                        this.colors.primary,
-                        this.colors.success
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { 
-                            color: '#e2e8f0',
-                            maxRotation: 45
-                        },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        // Render all charts for pensioni
+        this.renderPensioniChartsForTab('vigenti');
+    }
+
+    setupPensioniTabs() {
+        const tabs = document.querySelectorAll('#pensioni .tab-btn');
+        const contents = document.querySelectorAll('#pensioni .tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                const activeContent = document.getElementById(tab.dataset.tab);
+                activeContent.classList.add('active');
+                
+                // Render charts only when tab is activated
+                this.renderPensioniChartsForTab(activeContent.id);
+            });
         });
     }
 
-    loadAssistenzaCharts() {
-        // Invalidità civile
-        const invaliditaData = dashboardData.assistenza.invalidita_civile.prestazioni_vigenti;
-        this.createChart('chart-invalidita-civile', {
-            type: 'doughnut',
-            data: {
-                labels: ['Indennità Accompagnamento', 'Pensioni Invalidità'],
-                datasets: [{
-                    data: [
-                        invaliditaData.indennita_accompagnamento.totale,
-                        invaliditaData.pensioni_invalidita.totale
-                    ],
-                    backgroundColor: [this.colors.primary, this.colors.secondary],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
+    renderPensioniChartsForTab(tabId) {
+        const colors = {
+            orange: '#fb923c',
+            sky: '#38bdf8',
+            teal: '#2dd4bf',
+            pink: '#f472b6',
+            red: '#f87171',
+            purple: '#c084fc',
+            green: '#4ade80'
+        };
 
-        // Sostegno al reddito
-        const sostegnoData = dashboardData.assistenza.sostegno_reddito.evoluzione_accolte;
-        this.createChart('chart-sostegno-reddito', {
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        if (tabId === 'vigenti') {
+            this.createChart('pensionersByTypeChart', {
+                type: 'bar',
+                data: {
+                    labels: ['Femmine', 'Maschi'],
+                    datasets: [
+                        { label: 'Pensionati IVS', data: [45645, 43460], backgroundColor: colors.teal, borderRadius: 5 },
+                        { label: 'Beneficiari Assistenziali', data: [14394, 8566], backgroundColor: colors.purple, borderRadius: 5 }
+                    ]
+                },
+                options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+
+            this.createChart('averageAmountChart', {
+                type: 'bar',
+                data: {
+                    labels: ['FPLD', 'Dip. Pubblici', 'Lavoratori Autonomi'],
+                    datasets: [
+                        { label: 'Femmine', data: [905.5, 1875.4, 754.4], backgroundColor: colors.pink, borderRadius: 5 },
+                        { label: 'Maschi', data: [1789.1, 2511.7, 1330.4], backgroundColor: colors.sky, borderRadius: 5 }
+                    ]
+                },
+                options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw.toFixed(2)} €` } } } }
+            });
+
+            this.createChart('retirementAgeChart', {
+                type: 'line',
+                data: {
+                    labels: ['2022', '2023', '2024'],
+                    datasets: [
+                        { label: 'Femmine', data: [64.4, 64.9, 65.0], borderColor: colors.pink, tension: 0.3 },
+                        { label: 'Maschi', data: [63.4, 63.1, 63.2], borderColor: colors.sky, tension: 0.3 }
+                    ]
+                },
+                options: commonOptions
+            });
+
+            this.createChart('pensionsByFundChart', {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lavoratori Autonomi', 'FPLD', 'Dipendenti Pubblici', 'Altre Gestioni'],
+                    datasets: [{
+                        data: [42269, 40466, 20684, 9563],
+                        backgroundColor: [colors.purple, colors.sky, colors.teal, colors.orange],
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+            });
+        }
+        else if (tabId === 'liquidate') {
+             this.createChart('liquidatedPensionsTrendChart', {
+                type: 'line',
+                data: {
+                    labels: ['2021', '2022', '2023', '2024'],
+                    datasets: [
+                        { label: 'Totale', data: [5818, 6030, 5508, 5822], borderColor: colors.teal, tension: 0.3, borderWidth: 3 },
+                        { label: 'Femmine', data: [3187, 3231, 2863, 2960], borderColor: colors.pink, tension: 0.3, borderDash: [5, 5] },
+                        { label: 'Maschi', data: [2631, 2799, 2645, 2862], borderColor: colors.sky, tension: 0.3, borderDash: [5, 5] }
+                    ]
+                },
+                options: commonOptions
+            });
+
+            this.createChart('calculationSystemChart', {
+                type: 'bar',
+                data: {
+                    labels: ['2021', '2022', '2023', '2024'],
+                    datasets: [
+                        { label: 'Retributivo', data: [1561, 1453, 1301, 1262], backgroundColor: colors.purple, borderRadius: 5 },
+                        { label: 'Misto', data: [3228, 3240, 3022, 3275], backgroundColor: colors.sky, borderRadius: 5 },
+                        { label: 'Contributivo', data: [613, 821, 746, 793], backgroundColor: colors.teal, borderRadius: 5 }
+                    ]
+                },
+                options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+            
+            this.createChart('liquidatedCompositionChart', {
+                 type: 'doughnut',
+                data: {
+                    labels: ['Vecchiaia', 'Anzianità/Anticipate', 'Superstiti', 'Invalidità'],
+                    datasets: [{
+                        data: [1698, 1559, 1513, 560],
+                        backgroundColor: [colors.teal, colors.sky, colors.purple, colors.pink],
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+            });
+        }
+        else if (tabId === 'tempi') {
+            this.createChart('performanceByFundChart', {
+                type: 'bar',
+                data: {
+                    labels: ['Fondi Speciali', 'Gestione Pubblica', 'Gestione Privata'],
+                    datasets: [{
+                        label: '% liquidate entro 30 giorni',
+                        data: [98.0, 78.9, 76.9],
+                        backgroundColor: [colors.teal, colors.purple, colors.sky],
+                        borderRadius: 5
+                    }]
+                },
+                options: { 
+                    ...commonOptions, 
+                    indexAxis: 'y', 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        x: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#94a3b8', callback: (v) => v + '%' } 
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    } 
+                }
+            });
+
+             this.createChart('privateTimingDistributionChart', {
+                type: 'doughnut',
+                data: {
+                    labels: ['Entro 30 gg', '31-60 gg', '61-90 gg', 'Oltre 90 gg'],
+                    datasets: [{
+                        data: [76.9, 10.9, 4.9, 7.4],
+                        backgroundColor: [colors.green, colors.orange, colors.pink, colors.red],
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' }}, tooltip: {callbacks: {label: (c) => `${c.label}: ${c.raw}%`}}}}
+            });
+
+            this.createChart('benchmarkTimingChart', {
+                type: 'bar',
+                data: {
+                    labels: ['Gestione Privata', 'Gestione Pubblica'],
+                    datasets: [
+                        { label: 'Pesaro e Urbino', data: [76.9, 78.9], backgroundColor: colors.teal, borderRadius: 5 },
+                        { label: 'Italia', data: [78.6, 82.8], backgroundColor: 'rgba(45, 212, 191, 0.4)', borderRadius: 5 }
+                    ]
+                },
+                options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ticks: { callback: (v) => v + '%' } } } }
+            });
+        }
+        else if (tabId === 'anticipi') {
+             this.createChart('anticipiTrendChart', {
+                type: 'line',
+                data: {
+                    labels: ['2022', '2023', '2024'],
+                    datasets: [
+                        { label: 'Opzione Donna', data: [218, 101, 39], borderColor: colors.pink, tension: 0.3},
+                        { label: 'Quota 102/103', data: [25, 127, 100], borderColor: colors.sky, tension: 0.3}
+                    ]
+                },
+                options: commonOptions
+            });
+            
+            this.createChart('anticipiCompositionChart', {
+                 type: 'doughnut',
+                data: {
+                    labels: ['APE Sociale', 'Quota 103', 'Lavoratori Precoci', 'Opzione Donna', 'Lavori Usuranti'],
+                    datasets: [{
+                        data: [145, 100, 71, 39, 1],
+                        backgroundColor: [colors.teal, colors.sky, colors.purple, colors.pink, colors.orange],
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+            });
+
+            this.createChart('quoteGenderChart', {
+                type: 'bar',
+                data: {
+                    labels: ['Quota 100 (2021)', 'Quota 102 (2022)', 'Quota 103 (2023)', 'Quota 103 (2024)'],
+                    datasets: [
+                        { label: 'Femmine', data: [268, 11, 24, 18], backgroundColor: colors.pink, borderRadius: 5 },
+                        { label: 'Maschi', data: [425, 14, 103, 82], backgroundColor: colors.sky, borderRadius: 5 }
+                    ]
+                },
+                options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+        }
+    }
+
+    loadAssistenzaCharts() {
+        // Setup tabs functionality
+        this.setupAssistenzaTabs();
+
+        // Chart colors
+        const colors = {
+            orange: '#fb923c',
+            sky: '#38bdf8',
+            teal: '#2dd4bf',
+            pink: '#f472b6',
+            red: '#f87171',
+            purple: '#c084fc',
+            green: '#4ade80'
+        };
+
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        // --- INVALIDITÀ CIVILE ---
+        this.createChart('prestazioniVigentiChart', {
             type: 'bar',
             data: {
-                labels: ['RdC/PdC 2022', 'RdC/PdC 2023', 'ADI 2024', 'SFL 2024'],
+                labels: ['Indennità di Accompagnamento', 'Pensioni di Invalidità Civile'],
+                datasets: [
+                    { label: 'Femmine', data: [9916, 3155], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [5958, 2501], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        this.createChart('liquidazioniTrendChart', {
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024'],
                 datasets: [{
-                    label: 'Domande Accolte',
-                    data: [
-                        sostegnoData[2022].rdc_pdc,
-                        sostegnoData[2023].rdc_pdc,
-                        sostegnoData[2024].adi,
-                        sostegnoData[2024].sfl
-                    ],
-                    backgroundColor: [
-                        this.colors.error,
-                        this.colors.error,
-                        this.colors.success,
-                        this.colors.primary
-                    ]
+                    label: 'Totale Prestazioni Liquidate',
+                    data: [3906, 3526, 3596, 3540],
+                    borderColor: colors.teal,
+                    tension: 0.3,
+                    fill: false
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
+            options: { ...commonOptions, plugins: { legend: { display: false } } }
+        });
+        
+        this.createChart('tempiDefinizioneChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: 'Tempo Medio 2023 (gg)', data: [142, 118, 144], backgroundColor: 'rgba(192, 132, 252, 0.6)', borderRadius: 5 },
+                    { label: 'Tempo Medio 2024 (gg)', data: [162, 115, 140], backgroundColor: colors.purple, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
         });
 
-        // Assegno unico
-        const assegnoData = dashboardData.assistenza.assegno_unico;
-        this.createChart('chart-assegno-unico', {
+        // --- SOSTEGNO AL REDDITO ---
+        this.createChart('sostegnoRedditoChart', {
+            type: 'bar',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'RdC/PdC', data: [2299, 942, 0], backgroundColor: colors.orange, borderRadius: 5 },
+                    { label: 'ADI', data: [0, 0, 1737], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'SFL', data: [0, 143, 185], backgroundColor: colors.teal, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+        
+        this.createChart('assegnoUnicoChart', {
             type: 'bar',
             data: {
                 labels: ['2023', '2024'],
-                datasets: [{
-                    label: 'Nuclei Beneficiari',
-                    data: [
-                        assegnoData[2023].nuclei_au_domanda,
-                        assegnoData[2024].nuclei_au_domanda
-                    ],
-                    backgroundColor: this.colors.success
+                datasets: [{ 
+                    label: 'Nuclei AU a domanda', 
+                    data: [37537, 38226], 
+                    backgroundColor: [colors.green, colors.teal], 
+                    borderRadius: 5 
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
+            options: { ...commonOptions, plugins: { legend: { display: false } } }
+        });
+
+        this.createChart('rdcGenderChart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Femmine', 'Maschi'],
+                datasets: [{
+                    data: [560, 382],
+                    backgroundColor: [colors.pink, colors.sky],
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } }, tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}` } } } }
+        });
+    }
+
+    setupAssistenzaTabs() {
+        const tabs = document.querySelectorAll('#assistenza .tab-btn');
+        const contents = document.querySelectorAll('#assistenza .tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
         });
     }
 

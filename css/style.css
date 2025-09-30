@@ -200,6 +200,78 @@ body {
     pointer-events: none;
 }
 
+/* Internal tabs for sections */
+.tab-btn-demo, .tab-btn-lavoro, .tab-btn-contenzioso {
+    position: relative;
+    color: #94a3b8;
+    transition: color 0.2s ease-in-out;
+    padding-bottom: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.tab-btn-demo:hover, .tab-btn-lavoro:hover, .tab-btn-contenzioso:hover { 
+    color: #f8fafc; 
+}
+
+.tab-btn-demo.active {
+    color: #38bdf8; /* Blu per demografia */
+    font-weight: 600;
+}
+
+.tab-btn-demo.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background-color: #38bdf8;
+    border-radius: 2px;
+}
+
+.tab-btn-lavoro.active {
+    color: #4ade80; /* Verde per mercato del lavoro */
+    font-weight: 600;
+}
+
+.tab-btn-lavoro.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background-color: #4ade80;
+    border-radius: 2px;
+}
+
+.tab-btn-contenzioso.active {
+    color: #f87171; /* Rosso per contenzioso */
+    font-weight: 600;
+}
+
+.tab-btn-contenzioso.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background-color: #f87171;
+    border-radius: 2px;
+}
+
+.demo-tab-content, .lavoro-tab-content, .contenzioso-tab-content { 
+    display: none; 
+}
+
+.demo-tab-content.active, .lavoro-tab-content.active, .contenzioso-tab-content.active { 
+    display: block; 
+}
+
+.chart-container {
+    position: relative;
+    height: 40vh;
+    width: 100%;
+}
+
 .zoomable:hover::after {
     opacity: 1;
 }

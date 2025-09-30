@@ -37,6 +37,11 @@
     </script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
+    <!-- Modal Overlay per Zoom -->
+    <div id="zoom-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div id="zoomed-card" class="max-w-6xl w-full max-h-full overflow-auto"></div>
+    </div>
+    
     <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-600 px-6 py-4">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -120,91 +125,100 @@
         <div id="content" class="hidden">
             <!-- Demografia Section -->
             <section id="demografia" class="section-content active">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold mb-4 text-primary">Panorama Sociodemografico</h2>
-                    <p class="text-slate-300 mb-6">
-                        Analisi della popolazione, dinamiche demografiche, flussi migratori e indicatori di longevità
-                    </p>
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Panorama Socio-Demografico</h1>
+                    <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+                </header>
+
+                <!-- Schede KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Popolazione Totale</h3>
+                        <p class="text-4xl font-bold text-white mt-2">349.882</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Popolazione 65+</h3>
+                        <p class="text-4xl font-bold text-white mt-2">25,3%</p>
+                        <p class="text-sm text-slate-500 mt-1">Quota sul totale (2024)</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Saldo Naturale</h3>
+                        <p class="text-4xl font-bold text-red-400 mt-2">-1.883</p>
+                        <p class="text-sm text-slate-500 mt-1">Differenza nascite/decessi 2023</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Speranza di Vita (Donne)</h3>
+                        <p class="text-4xl font-bold text-white mt-2">86,1</p>
+                        <p class="text-sm text-slate-500 mt-1">Anni, alla nascita (2023)</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- Popolazione Card -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Distribuzione Popolazione 2024</h3>
+                <!-- Tab Buttons -->
+                <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+                    <button class="tab-btn active" data-tab="struttura">Struttura Popolazione</button>
+                    <button class="tab-btn" data-tab="dinamica">Dinamica Demografica</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-contents" class="mt-8">
+                    <!-- Struttura Popolazione -->
+                    <div id="struttura" class="tab-content active space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Confronto Piramide delle Età (% Popolazione, 2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>La provincia di Pesaro e Urbino ha una quota di <strong class="text-slate-100">popolazione anziana (25,3%)</strong> leggermente superiore alla media nazionale (24,4%).</li>
+                                <li>La fascia di popolazione in età lavorativa <strong class="text-sky-400">(15-64 anni)</strong> è in linea con i dati regionali e nazionali.</li>
+                                <li>La percentuale di giovani <strong class="text-teal-400">(0-14 anni)</strong> è più bassa rispetto alla media italiana, evidenziando un indice di natalità ridotto.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="agePyramidChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-popolazione" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione Popolazione per Genere (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>La popolazione provinciale è composta per il <strong class="text-pink-400">50,8% da donne</strong> e per il <strong class="text-sky-400">49,2% da uomini</strong>.</li>
+                                    <li>Questa distribuzione è perfettamente allineata con l'andamento regionale e nazionale.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="genderDistributionChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Speranza di Vita alla Nascita (2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>La speranza di vita a Pesaro e Urbino è <strong class="text-green-400">superiore alla media italiana</strong>, sia per le donne che per gli uomini.</li>
+                                    <li>Le <strong class="text-pink-400">donne</strong> hanno un'aspettativa di vita di <strong class="text-pink-400">86,1 anni</strong>, mentre gli <strong class="text-sky-400">uomini</strong> di <strong class="text-sky-400">82,2 anni</strong>.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="lifeExpectancyChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Saldo Naturale Card -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Andamento Saldo Naturale</h3>
+                    <!-- Dinamica Demografica -->
+                    <div id="dinamica" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Saldo Naturale (2013-2023)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il saldo naturale è <strong class="text-red-400">costantemente negativo</strong> nell'ultimo decennio, indicando un numero di decessi superiore a quello delle nascite.</li>
+                                <li>Il picco negativo è stato raggiunto nel <strong class="text-red-500">2020</strong>, in concomitanza con la pandemia, con un saldo di -2.755.</li>
+                                <li>Il calo delle nascite è un trend costante, passato da oltre 3.000 nel 2013 a circa 2.000 nel 2023.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="naturalBalanceChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-saldo-naturale" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Longevità Card -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Speranza di Vita</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-longevita" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Flussi Migratori Card -->
-                    <div class="card zoomable lg:col-span-2">
-                        <div class="card-header">
-                            <h3 class="card-title">Flussi Migratori e Saldo Demografico</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-flussi-migratori" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Demografia Stats Card -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Indicatori Demografici</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="space-y-4">
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Popolazione Totale</span>
-                                    <span class="font-bold text-primary">349.882</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Femmine</span>
-                                    <span class="font-bold">50.8%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Maschi</span>
-                                    <span class="font-bold">49.2%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">0-14 anni</span>
-                                    <span class="font-bold text-secondary">11.8%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">15-64 anni</span>
-                                    <span class="font-bold text-success">63.0%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">65+ anni</span>
-                                    <span class="font-bold text-accent">25.3%</span>
-                                </div>
-                                <div class="border-t border-slate-600 pt-4">
-                                    <div class="flex justify-between">
-                                        <span class="text-slate-300">Saldo Demografico 2023</span>
-                                        <span class="font-bold text-red-400">-778</span>
-                                    </div>
-                                </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Flussi Migratori con l'Estero (2013-2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il numero di <strong class="text-green-400">immigrati</strong> dall'estero è stabilmente superiore a quello degli <strong class="text-orange-400">emigrati</strong>.</li>
+                                    <li>Il saldo migratorio è quindi <strong class="text-slate-100">costantemente positivo</strong>, contribuendo a rallentare il calo demografico.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="migrationFlowChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Saldo Demografico (2013-2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il <strong class="text-green-400">saldo migratorio positivo</strong> ha parzialmente compensato il <strong class="text-red-400">saldo naturale negativo</strong> fino al 2019.</li>
+                                    <li>Dal 2020, il calo delle nascite e l'aumento dei decessi hanno reso il <strong class="text-purple-400">saldo demografico complessivo negativo</strong>.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="demographicBalanceChart"></canvas></div>
                             </div>
                         </div>
                     </div>
@@ -213,88 +227,100 @@
 
             <!-- Mercato del Lavoro Section -->
             <section id="mercato_lavoro" class="section-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold mb-4 text-primary">Mercato del Lavoro</h2>
-                    <p class="text-slate-300 mb-6">
-                        Analisi dell'occupazione, assunzioni, cessazioni, retribuzioni e indicatori del mercato del lavoro
-                    </p>
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Mercato del Lavoro</h1>
+                    <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+                </header>
+
+                <!-- Schede KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Tasso di Occupazione</h3>
+                        <p class="text-4xl font-bold text-white mt-2">70,1%</p>
+                        <p class="text-sm text-slate-500 mt-1">Popolazione 15-64 anni (2024)</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Tasso di Disoccupazione</h3>
+                        <p class="text-4xl font-bold text-green-400 mt-2">3,7%</p>
+                        <p class="text-sm text-slate-500 mt-1">Popolazione 15-74 anni (2024)</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Lavoratori Totali</h3>
+                        <p class="text-4xl font-bold text-white mt-2">173.233</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2023</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Incidenza Part-Time (Donne)</h3>
+                        <p class="text-4xl font-bold text-white mt-2">48,1%</p>
+                        <p class="text-sm text-slate-500 mt-1">Sulle dipendenti private (2023)</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- Lavoratori per Categoria -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Lavoratori per Categoria</h3>
+                <!-- Tab Buttons -->
+                <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+                    <button class="tab-btn active" data-tab="occupazione">Occupazione e Struttura</button>
+                    <button class="tab-btn" data-tab="flussi">Flussi e Contratti</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-contents" class="mt-8">
+                    <!-- Occupazione e Struttura -->
+                    <div id="occupazione" class="tab-content active space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Indicatori del Mercato del Lavoro (2022-2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il <strong class="text-green-400">tasso di occupazione</strong> provinciale (70,1%) è costantemente superiore alla media regionale e nazionale.</li>
+                                <li>Il <strong class="text-green-400">tasso di disoccupazione</strong> (3,7%) è in netto calo nel 2024 e si attesta su valori significativamente inferiori rispetto a Marche e Italia.</li>
+                                <li>Il <strong class="text-slate-100">tasso di inattività</strong> (27,4%) è anch'esso più basso delle medie di riferimento, indicando una maggiore partecipazione al mercato del lavoro.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="mainIndicatorsChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-lavoratori-categoria" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Lavoratori per Posizione (2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>La stragrande maggioranza degli occupati (circa 80%) è costituita da <strong class="text-sky-400">lavoratori dipendenti</strong>.</li>
+                                    <li>Seguono a distanza <strong class="text-teal-400">Commercianti</strong> (7%) e <strong class="text-purple-400">Artigiani</strong> (6,9%).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="workersCompositionChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Divario Retributivo di Genere (€/giorno, 2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Esiste un <strong class="text-red-400">significativo divario retributivo</strong> a sfavore delle donne in quasi tutti i settori del privato.</li>
+                                    <li>Il gap è particolarmente marcato nel settore <strong class="text-pink-400">manifatturiero</strong> (€78,1 vs €102,6) e nel <strong class="text-pink-400">commercio</strong> (€67,9 vs €89,0).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="genderPayGapChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Tasso di Occupazione -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Tasso di Occupazione</h3>
+                    <!-- Flussi e Contratti -->
+                    <div id="flussi" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Tipologie Contrattuali nelle Assunzioni (2023 vs 2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il <strong class="text-sky-400">lavoro a tempo determinato</strong> rappresenta la principale modalità di assunzione, sebbene in leggero calo nel 2024.</li>
+                                <li>Crescono i contratti <strong class="text-purple-400">intermittenti</strong>, mentre calano quelli a <strong class="text-green-400">tempo indeterminato</strong> e in <strong class="text-orange-400">somministrazione</strong>.</li>
+                                <li>I contratti <strong class="text-teal-400">stagionali</strong> rimangono stabili, legati alla vocazione turistica del territorio.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="hiresByContractChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-tasso-occupazione" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Assunzioni vs Cessazioni -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Assunzioni vs Cessazioni 2024</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-assunzioni-cessazioni" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Retribuzioni Medie -->
-                    <div class="card zoomable lg:col-span-2">
-                        <div class="card-header">
-                            <h3 class="card-title">Retribuzioni Medie per Settore</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-retribuzioni" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Lavoro Stats -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Indicatori Occupazionali</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="space-y-4">
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Occupati Totali</span>
-                                    <span class="font-bold text-success">159.000</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Tasso Occupazione</span>
-                                    <span class="font-bold text-primary">70.1%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Tasso Disoccupazione</span>
-                                    <span class="font-bold text-secondary">3.7%</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-300">Part Time</span>
-                                    <span class="font-bold">26.8%</span>
-                                </div>
-                                <div class="border-t border-slate-600 pt-4">
-                                    <div class="text-sm text-slate-400 mb-2">Confronto Italia:</div>
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-slate-300">Occupazione</span>
-                                        <span class="text-success">+7.9pp</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-slate-300">Disoccupazione</span>
-                                        <span class="text-success">-2.8pp</span>
-                                    </div>
-                                </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Saldo Assunzioni/Cessazioni per Contratto (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Nel 2024 si registra un <strong class="text-red-400">saldo negativo per i contratti a tempo indeterminato</strong>, con più cessazioni che assunzioni.</li>
+                                    <li>Il saldo è invece <strong class="text-green-400">positivo per i contratti a tempo determinato</strong>, che compensano parzialmente la perdita di posti stabili.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="hiresTerminationsBalanceChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Lavoro Part-Time per Genere (Dipendenti, 2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il part-time è una caratteristica prevalentemente femminile: quasi <strong class="text-pink-400">una lavoratrice dipendente su due</strong> ha un contratto a tempo parziale (48,1%).</li>
+                                    <li>L'incidenza per gli <strong class="text-sky-400">uomini</strong> è molto più bassa (11,5%), seppur inferiore alla media nazionale.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="partTimeIncidenceChart"></canvas></div>
                             </div>
                         </div>
                     </div>
@@ -345,41 +371,99 @@
 
             <!-- Ammortizzatori Section -->
             <section id="ammortizzatori" class="section-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold mb-4 text-primary">Ammortizzatori Sociali</h2>
-                    <p class="text-slate-300 mb-6">
-                        NASpI, Cassa Integrazione, beneficiari e tempi di erogazione delle prestazioni
-                    </p>
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Ammortizzatori Sociali</h1>
+                    <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2022-2024)</p>
+                </header>
+
+                <!-- Schede KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Domande NASpI</h3>
+                        <p class="text-4xl font-bold text-white mt-2">16.395</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Beneficiari CIG</h3>
+                        <p class="text-4xl font-bold text-white mt-2">9.352</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">NASpI accolte in 15gg</h3>
+                        <p class="text-4xl font-bold text-green-400 mt-2">88,5%</p>
+                        <p class="text-sm text-slate-500 mt-1">Performance 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Erogazione CIGO</h3>
+                        <p class="text-4xl font-bold text-white mt-2">11 gg</p>
+                        <p class="text-sm text-slate-500 mt-1">Tempo medio 2024</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- NASpI -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">NASpI - Evoluzione</h3>
+                <!-- Tab Buttons -->
+                <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+                    <button class="tab-btn active" data-tab="cessazione">Cessazione Rapporto</button>
+                    <button class="tab-btn" data-tab="sospensione">Sospensione Rapporto</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-contents" class="mt-8">
+                    <!-- Cessazione Rapporto -->
+                    <div id="cessazione" class="tab-content active space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Domande NASpI Accolte per Genere (2022-2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il numero totale di domande NASpI è in <strong class="text-slate-100">costante crescita</strong> negli ultimi tre anni.</li>
+                                <li>Le domande presentate dalle <strong class="text-pink-400">donne</strong> sono costantemente superiori a quelle degli <strong class="text-sky-400">uomini</strong>.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="naspiGenderChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-naspi" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Beneficiari per Prestazione (2023 vs 2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>La <strong class="text-purple-400">NASpI</strong> è la prestazione principale, con un numero di beneficiari in aumento nel 2024.</li>
+                                    <li>Seguono la <strong class="text-teal-400">Disoccupazione Agricola</strong> e la <strong class="text-orange-400">Dis-coll</strong>.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="benefitsTypeChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Tempi di Accoglimento NASpI (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Performance eccellente a Pesaro e Urbino: l'<strong class="text-green-400">88,5%</strong> delle domande è accolto <strong class="text-green-400">entro 15 giorni</strong>.</li>
+                                    <li>Il dato è superiore alla media regionale (85,6%) e nazionale (85,8%).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="naspiTimingChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- CIG -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Cassa Integrazione - Ore</h3>
+                    <!-- Sospensione Rapporto -->
+                    <div id="sospensione" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">CIG - Ore Autorizzate per Tipologia (2021-2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Drastico calo delle ore autorizzate dopo il picco del 2021 legato all'emergenza pandemica.</li>
+                                <li>Nel 2024, la <strong class="text-sky-400">CIGO</strong> e la <strong class="text-pink-400">CIGS</strong> sono le prestazioni più utilizzate.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="cigHoursChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-cig" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Tempi Erogazione -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Tempi di Erogazione</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-tempi-erogazione" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Beneficiari CIG (2023 vs 2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Numero totale di beneficiari in leggero aumento nel 2024.</li>
+                                    <li>La <strong class="text-sky-400">CIGO</strong> è la prestazione con più beneficiari, seguita dalla <strong class="text-pink-400">CIGS</strong>.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="cigBeneficiariesChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Tempi Medi di Erogazione (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>I tempi per la <strong class="text-purple-400">CIGO</strong> a Pesaro (11 gg) sono in linea con la media regionale e molto più rapidi di quella nazionale.</li>
+                                    <li>I tempi per i <strong class="text-teal-400">Fondi di Solidarietà (FIS)</strong> provinciali (52 gg) sono più lenti della media regionale ma più veloci di quella nazionale.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="erogationTimingChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,41 +471,171 @@
 
             <!-- Pensioni Section -->
             <section id="pensioni" class="section-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold mb-4 text-primary">Prestazioni Pensionistiche</h2>
-                    <p class="text-slate-300 mb-6">
-                        Pensioni vigenti e liquidate, importi medi, anticipazioni pensionistiche
-                    </p>
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Prestazioni Pensionistiche e Previdenziali</h1>
+                    <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino</p>
+                </header>
+
+                <!-- Schede KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Pensionati Totali</h3>
+                        <p class="text-4xl font-bold text-white mt-2">98.502</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Pensioni Liquidate 2024</h3>
+                        <p class="text-4xl font-bold text-white mt-2">5.822</p>
+                        <p class="text-sm text-slate-500 mt-1">Nuove pensioni IVS</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Efficienza Liquidazione</h3>
+                        <p class="text-4xl font-bold text-green-400 mt-2">76,9%</p>
+                        <p class="text-sm text-slate-500 mt-1">Gest. Privata liquidate < 30gg</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Anticipi Pensionistici</h3>
+                        <p class="text-4xl font-bold text-white mt-2">356</p>
+                        <p class="text-sm text-slate-500 mt-1">Domande accolte nel 2024</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- Pensioni per Gestione -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Pensioni per Gestione</h3>
+                <!-- Tab Buttons -->
+                <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+                    <button class="tab-btn active" data-tab="vigenti">Pensioni Vigenti</button>
+                    <button class="tab-btn" data-tab="liquidate">Pensioni Liquidate</button>
+                    <button class="tab-btn" data-tab="tempi">Tempi di Liquidazione</button>
+                    <button class="tab-btn" data-tab="anticipi">Anticipi Pensionistici</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-contents" class="mt-8">
+                    <!-- Pensioni Vigenti -->
+                    <div id="vigenti" class="tab-content active space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Pensionati per Tipologia e Genere (2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il numero di pensionati IVS (previdenziali) è quasi paritario tra i generi.</li>
+                                <li>Le <strong class="text-pink-400">donne</strong> sono nettamente maggioritarie tra i beneficiari di prestazioni assistenziali (pensioni/assegni sociali e invalidità civile).</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="pensionersByTypeChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-pensioni-gestione" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Importo Medio Mensile Pensioni IVS per Genere e Gestione</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                     <li>Emerge un <strong class="text-red-400">gender gap</strong> significativo in tutte le gestioni, con gli <strong class="text-sky-400">uomini</strong> che percepiscono un importo medio mensile molto più elevato.</li>
+                                     <li>Il divario è particolarmente marcato nel Fondo Pensioni Lavoratori Dipendenti (FPLD).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="averageAmountChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Età Media alla Decorrenza (Vecchiaia/Anticipate)</h3>
+                                 <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>L'età di pensionamento per le <strong class="text-pink-400">donne</strong> è in costante e leggero aumento, attestandosi a 65 anni nel 2024.</li>
+                                    <li>L'età per gli <strong class="text-sky-400">uomini</strong> rimane più stabile, intorno ai 63 anni.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="retirementAgeChart"></canvas></div>
+                            </div>
+                        </div>
+                         <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Numero Pensioni IVS per Gestione (2024)</h3>
+                             <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>La maggior parte delle pensioni è erogata dalle gestioni dei <strong class="text-purple-400">Lavoratori Autonomi</strong> (37.4%) e dal <strong class="text-sky-400">Fondo Lavoratori Dipendenti</strong> (35.8%).</li>
+                                <li>Seguono i <strong class="text-teal-400">Dipendenti Pubblici</strong> con il 18.3% del totale.</li>
+                            </ul>
+                            <div class="chart-container"><canvas id="pensionsByFundChart"></canvas></div>
                         </div>
                     </div>
 
-                    <!-- Importi Medi -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Importi Medi per Genere</h3>
+                    <!-- Pensioni Liquidate -->
+                    <div id="liquidate" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Pensioni IVS Liquidate (2021-2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il numero totale di pensioni liquidate mostra una certa variabilità, con un picco nel 2022 e un calo nel 2023, seguito da una ripresa nel 2024.</li>
+                                <li>Il numero di pensioni liquidate alle <strong class="text-pink-400">donne</strong> è costantemente superiore a quello degli <strong class="text-sky-400">uomini</strong>.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="liquidatedPensionsTrendChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-importi-medi" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Liquidate per Sistema di Calcolo (2021-2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il sistema <strong class="text-sky-400">Misto</strong> è predominante e stabile nel tempo.</li>
+                                    <li>Si osserva un graduale calo del sistema <strong class="text-purple-400">Retributivo</strong> a favore di un leggero aumento del <strong class="text-teal-400">Contributivo</strong> puro.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="calculationSystemChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Pensioni Liquidate (2024)</h3>
+                                 <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Le pensioni di <strong class="text-teal-400">Vecchiaia</strong> (31.9%) e <strong class="text-sky-400">Anzianità/Anticipate</strong> (29.2%) costituiscono la maggioranza delle liquidate.</li>
+                                    <li>Seguono le pensioni ai <strong class="text-purple-400">Superstiti</strong> (28.4%) e di <strong class="text-pink-400">Invalidità</strong> (10.5%).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="liquidatedCompositionChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Anticipazioni -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Anticipazioni Pensionistiche</h3>
+                    <!-- Tempi di Liquidazione -->
+                    <div id="tempi" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Performance di Liquidazione per Gestione (Entro 30 giorni, 2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>La provincia di Pesaro e Urbino mostra <strong class="text-green-400">performance eccellenti</strong> nella liquidazione delle pensioni.</li>
+                                <li>I <strong class="text-teal-400">Fondi Speciali</strong> registrano il risultato migliore, con il <strong class="text-teal-400">98%</strong> delle pratiche definite entro 30 giorni.</li>
+                                <li>Anche la <strong class="text-purple-400">Gestione Pubblica</strong> (78,9%) e la <strong class="text-sky-400">Gestione Privata</strong> (76,9%) mostrano ottimi livelli di efficienza.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="performanceByFundChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-anticipazioni" class="chart-canvas"></canvas>
+                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione Tempi - Gestione Privata (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Oltre due terzi delle pensioni (<strong class="text-green-400">76,9%</strong>) vengono liquidate entro 30 giorni.</li>
+                                    <li>Solo una piccola quota (<strong class="text-red-400">7,4%</strong>) richiede più di 90 giorni per la lavorazione.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="privateTimingDistributionChart"></canvas></div>
+                            </div>
+                             <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Confronto Performance vs Italia (Entro 30 gg)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>La performance di Pesaro e Urbino è sostanzialmente <strong class="text-green-400">in linea o leggermente migliore</strong> della media nazionale per la Gestione Privata.</li>
+                                     <li>Per la Gestione Pubblica, la provincia registra tempi leggermente <strong class="text-orange-400">più lenti</strong> rispetto alla media italiana.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="benchmarkTimingChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Anticipi Pensionistici -->
+                    <div id="anticipi" class="tab-content space-y-6">
+                         <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Domande Accolte per Principali Anticipi</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Si osserva un <strong class="text-red-400">drastico calo</strong> delle domande per <strong class="text-pink-400">Opzione Donna</strong>, passate da 218 nel 2022 a 39 nel 2024.</li>
+                                <li>Le pensioni "Quota" hanno visto un picco con <strong class="text-sky-400">Quota 100</strong> nel 2021 (non mostrato), per poi ridursi notevolmente con le misure successive.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="anticipiTrendChart"></canvas></div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Anticipi Pensionistici (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>L'<strong class="text-teal-400">APE Sociale</strong> è la forma di anticipo più utilizzata nel 2024, con 145 certificazioni accolte.</li>
+                                    <li>Seguono <strong class="text-sky-400">Quota 103</strong> (100) e i <strong class="text-purple-400">Lavoratori Precoci</strong> (71).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="anticipiCompositionChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione per Genere "Quote" (2021-2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Tutte le forme di pensione "Quota" sono state utilizzate prevalentemente da <strong class="text-sky-400">uomini</strong>.</li>
+                                    <li>Il divario di genere è stato particolarmente accentuato in <strong class="text-red-400">Quota 103</strong>.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="quoteGenderChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -429,41 +643,98 @@
 
             <!-- Assistenza Section -->
             <section id="assistenza" class="section-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold mb-4 text-primary">Prestazioni Assistenziali</h2>
-                    <p class="text-slate-300 mb-6">
-                        Invalidità civile, misure di sostegno al reddito, assegno unico universale
-                    </p>
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Prestazioni Assistenziali e Sociali</h1>
+                    <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+                </header>
+
+                <!-- Schede KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Prestazioni Inv. Civile</h3>
+                        <p class="text-4xl font-bold text-white mt-2">21.530</p>
+                        <p class="text-sm text-slate-500 mt-1">Prestazioni vigenti 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Nuclei Assegno Unico</h3>
+                        <p class="text-4xl font-bold text-white mt-2">38.226</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Beneficiari ADI</h3>
+                        <p class="text-4xl font-bold text-white mt-2">1.737</p>
+                        <p class="text-sm text-slate-500 mt-1">Nuova misura 2024</p>
+                    </div>
+                     <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Tempo Medio Inv. Civile</h3>
+                        <p class="text-4xl font-bold text-red-400 mt-2">162 gg</p>
+                        <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Tab Buttons -->
+                <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+                    <button class="tab-btn active" data-tab="invalidita">Invalidità Civile</button>
+                    <button class="tab-btn" data-tab="sostegno">Sostegno al Reddito</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-contents" class="mt-8">
                     <!-- Invalidità Civile -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Invalidità Civile</h3>
+                    <div id="invalidita" class="tab-content active space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Prestazioni Vigenti per Genere e Tipologia (2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>L'<strong class="text-sky-400">Indennità di Accompagnamento</strong> costituisce la maggioranza delle prestazioni (73,7%).</li>
+                                <li>In entrambe le categorie, le <strong class="text-pink-400">donne</strong> rappresentano la maggioranza dei beneficiari, in modo particolare per l'indennità di accompagnamento.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="prestazioniVigentiChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-invalidita-civile" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Liquidazioni (2021-2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il numero totale di nuove prestazioni liquidate mostra una <strong class="text-slate-100">sostanziale stabilità</strong> negli ultimi 4 anni, con circa 3.500 nuove liquidazioni annue.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="liquidazioniTrendChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Tempi Medi di Definizione (Giorni)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Nel 2024 si registra un <strong class="text-red-400">aumento dei tempi medi totali</strong> (162 gg vs 142 gg), dovuto all'allungamento della <strong class="text-orange-400">fase sanitaria</strong>.</li>
+                                    <li>I tempi provinciali sono in linea con la media nazionale ma superiori a quella regionale.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="tempiDefinizioneChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Sostegno Reddito -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Misure Sostegno Reddito</h3>
+                    <!-- Sostegno al Reddito -->
+                    <div id="sostegno" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Transizione da RdC a ADI/SFL (Domande Accolte)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>Il 2024 vede la sostituzione del Reddito di Cittadinanza con le nuove misure.</li>
+                                <li>Il numero di nuclei beneficiari dell'<strong class="text-sky-400">Assegno di Inclusione (ADI)</strong> (1.737) è superiore a quello dei beneficiari di RdC/PdC dell'anno precedente (942).</li>
+                                <li>Il <strong class="text-teal-400">Supporto per la Formazione e il Lavoro (SFL)</strong> si attesta su numeri più contenuti.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="sostegnoRedditoChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-sostegno-reddito" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Assegno Unico -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Assegno Unico Universale</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-assegno-unico" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Nuclei Beneficiari Assegno Unico</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il numero di nuclei che beneficiano dell'Assegno Unico è in <strong class="text-green-400">leggera crescita</strong> nel 2024.</li>
+                                    <li>La misura raggiunge oltre <strong class="text-slate-100">38.000 famiglie</strong> nella provincia.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="assegnoUnicoChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Genere Domande RdC (2023)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Nel 2023, le domande di RdC/PdC accolte provenivano per il <strong class="text-pink-400">59,4% da donne</strong> e per il <strong class="text-sky-400">40,6% da uomini</strong>.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="rdcGenderChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -555,41 +826,99 @@
 
             <!-- Contenzioso Section -->
             <section id="contenzioso" class="section-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold mb-4 text-primary">Contenzioso</h2>
-                    <p class="text-slate-300 mb-6">
-                        Contenzioso amministrativo, giudiziario ordinario e ATP invalidità civile
-                    </p>
+                <header class="mb-8 text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Contenzioso</h1>
+                    <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2024)</p>
+                </header>
+
+                <!-- Schede KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Ricorsi Amministrativi</h3>
+                        <p class="text-4xl font-bold text-white mt-2">514</p>
+                        <p class="text-sm text-slate-500 mt-1">Ricorsi pervenuti nel 2024</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Nuovi Giudizi Totali</h3>
+                        <p class="text-4xl font-bold text-white mt-2">768</p>
+                        <p class="text-sm text-slate-500 mt-1">Ordinari + ATP Invalidità Civile</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Esito Favorevole INPS</h3>
+                        <p class="text-4xl font-bold text-green-400 mt-2">38,1%</p>
+                        <p class="text-sm text-slate-500 mt-1">Sui giudizi definiti totali</p>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="text-slate-400 font-semibold text-md">Pendenza Giudiziaria</h3>
+                        <p class="text-4xl font-bold text-red-400 mt-2">604</p>
+                        <p class="text-sm text-slate-500 mt-1">Giudizi da lavorare a fine 2024</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Tab Buttons -->
+                <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+                    <button class="tab-btn active" data-tab="amministrativo">Contenzioso Amministrativo</button>
+                    <button class="tab-btn" data-tab="giudiziario">Contenzioso Giudiziario</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-contents" class="mt-8">
                     <!-- Contenzioso Amministrativo -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Contenzioso Amministrativo</h3>
+                    <div id="amministrativo" class="tab-content active space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Flusso dei Ricorsi Amministrativi (2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>A fronte di <strong class="text-sky-400">514 nuovi ricorsi</strong> pervenuti, ne sono stati definiti complessivamente <strong class="text-green-400">500</strong>.</li>
+                                <li>La maggior parte dei ricorsi (<strong class="text-purple-400">322</strong>) è stata decisa dai Comitati, mentre una quota significativa è stata risolta in fase istruttoria.</li>
+                                <li>Il carico di lavoro finale si attesta a <strong class="text-orange-400">40 ricorsi</strong>, in aumento rispetto ai 25 di inizio anno.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="adminAppealsFlowChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-contenzioso-amm" class="chart-canvas"></canvas>
+                        <div class="card">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Legenda Contenzioso Amministrativo</h3>
+                            <dl class="text-slate-400 space-y-3 text-sm">
+                                <div>
+                                    <dt class="font-semibold text-slate-200">Risolti Amministrativamente</dt>
+                                    <dd>Definiti dagli uffici tramite provvedimenti di Autotutela.</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-semibold text-slate-200">Giudicati in Istruttoria</dt>
+                                    <dd>Definiti per inammissibilità o improcedibilità prima di arrivare ai Comitati.</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-semibold text-slate-200">Trasmessi / Deliberati dai Comitati</dt>
+                                    <dd>Ricorsi che seguono l'iter decisionale collegiale.</dd>
+                                </div>
+                            </dl>
                         </div>
                     </div>
-
                     <!-- Contenzioso Giudiziario -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">Contenzioso Giudiziario</h3>
+                    <div id="giudiziario" class="tab-content space-y-6">
+                        <div class="card zoomable">
+                            <h3 class="font-bold text-xl text-slate-200 mb-4">Esito dei Giudizi Definiti per Tipologia (2024)</h3>
+                            <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                <li>L'esito è nettamente diverso a seconda della tipologia di contenzioso.</li>
+                                <li>Nel <strong class="text-sky-400">Contenzioso Ordinario</strong>, l'INPS ha un esito favorevole nel <strong class="text-green-400">54%</strong> dei casi.</li>
+                                <li>Nel <strong class="text-purple-400">Contenzioso ATP su Invalidità Civile</strong>, l'esito è favorevole agli <strong class="text-pink-400">Utenti</strong> nel <strong class="text-pink-400">57%</strong> dei casi.</li>
+                            </ul>
+                            <div class="chart-container" style="height: 50vh;"><canvas id="judicialOutcomesChart"></canvas></div>
                         </div>
-                        <div class="card-content">
-                            <canvas id="chart-contenzioso-giud" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- ATP Invalidità -->
-                    <div class="card zoomable">
-                        <div class="card-header">
-                            <h3 class="card-title">ATP Invalidità Civile</h3>
-                        </div>
-                        <div class="card-content">
-                            <canvas id="chart-atp-invalidita" class="chart-canvas"></canvas>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Giudizi Ordinari Iniziati per Materia (2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>Il <strong class="text-sky-400">Contenzioso Contributivo</strong> (71 casi) è la materia prevalente, seguita da <strong class="text-teal-400">Invalidità Civile</strong> (41) e <strong class="text-purple-400">Pensioni</strong> (25).</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="judicialCasesBySubjectChart"></canvas></div>
+                            </div>
+                            <div class="card zoomable">
+                                <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Pendenze (Inizio vs Fine 2024)</h3>
+                                <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                                    <li>La pendenza del <strong class="text-red-400">contenzioso ordinario</strong> è aumentata, passando da 160 a 206 casi.</li>
+                                    <li>La pendenza del <strong class="text-green-400">contenzioso ATP</strong> è invece leggermente diminuita, da 403 a 398 casi.</li>
+                                </ul>
+                                <div class="chart-container"><canvas id="pendingCasesChart"></canvas></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -658,6 +987,301 @@
         <div id="zoomed-card" class="bg-slate-800 rounded-lg max-w-4xl max-h-[90vh] overflow-auto">
         </div>
     </div>
+
+    <!-- Dashboard Sections JavaScript -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        // Tab management for integrated sections
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const parentSection = tab.closest('section');
+                const sectionTabs = parentSection.querySelectorAll('.tab-btn');
+                const sectionContents = parentSection.querySelectorAll('.tab-content');
+                
+                sectionTabs.forEach(t => t.classList.remove('active'));
+                sectionContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const targetTab = parentSection.querySelector(`#${tab.dataset.tab}`);
+                if (targetTab) targetTab.classList.add('active');
+            });
+        });
+
+        // Zoom functionality for cards
+        const overlay = document.getElementById('zoom-overlay') || document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            if (overlay) overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    if (overlay) overlay.classList.remove('hidden');
+                }
+            });
+        });
+        if (overlay) overlay.addEventListener('click', unzoom);
+
+        // Chart.js global settings
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            try {
+                const chart = new Chart(canvas, config);
+                chartInstances.set(canvas, chart);
+                return chart;
+            } catch (error) {
+                console.warn(`Could not create chart for ${canvasId}:`, error);
+                return null;
+            }
+        }
+
+        // DEMOGRAFIA CHARTS
+        // Struttura Popolazione
+        createChart('agePyramidChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: '0-14 anni', data: [11.8, 11.6, 12.2], backgroundColor: colors.teal, borderRadius: 5 },
+                    { label: '15-64 anni', data: [63.0, 62.2, 63.5], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: '65 e oltre', data: [25.3, 26.2, 24.4], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        createChart('genderDistributionChart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Femmine', 'Maschi'],
+                datasets: [{
+                    data: [50.8, 49.2],
+                    backgroundColor: [colors.pink, colors.sky],
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#cbd5e1' } },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } }
+                }
+            }
+        });
+        
+        createChart('lifeExpectancyChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: 'Femmine', data: [86.1, 85.9, 85.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [82.2, 81.9, 81.0], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: false, suggestedMin: 80 } } }
+        });
+
+        // Dinamica Demografica
+        const years = ['2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023'];
+        createChart('naturalBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { type: 'line', label: 'Saldo Naturale', data: [-717, -728, -1137, -1089, -1370, -1414, -1666, -2755, -2018, -2270, -1883], borderColor: colors.purple, tension: 0.3, yAxisID: 'y1' },
+                    { label: 'Nascite', data: [3076, 2931, 2840, 2717, 2528, 2378, 2268, 2161, 2182, 2122, 2036], backgroundColor: colors.green, borderRadius: 5, yAxisID: 'y' },
+                    { label: 'Decessi', data: [3793, 3659, 3977, 3806, 3898, 3792, 3934, 4916, 4200, 4392, 3919], backgroundColor: colors.red, borderRadius: 5, yAxisID: 'y' }
+                ]
+            },
+            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { position: 'left', title: { display: true, text: 'Nascite / Decessi' } }, y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Saldo' } } } }
+        });
+        
+        createChart('migrationFlowChart', {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    { label: 'Immigrati', data: [1888, 1774, 1437, 1629, 1700, 1894, 1843, 1618, 1630, 1626, 1758], borderColor: colors.green, tension: 0.3 },
+                    { label: 'Emigrati', data: [508, 538, 635, 702, 683, 790, 665, 748, 564, 642, 653], borderColor: colors.orange, tension: 0.3 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        createChart('demographicBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { label: 'Saldo Naturale', data: [-717, -728, -1137, -1089, -1370, -1414, -1666, -2755, -2018, -2270, -1883], backgroundColor: colors.red, borderRadius: 5 },
+                    { label: 'Saldo Migratorio', data: [1380, 1236, 802, 927, 1017, 1104, 1178, 870, 1066, 984, 1105], backgroundColor: colors.green, borderRadius: 5 },
+                    { type: 'line', label: 'Saldo Demografico Totale', data: [663, 508, -335, -162, -353, -310, -488, -1885, -952, -1286, -778], borderColor: colors.purple, tension: 0.3, pointBackgroundColor: colors.purple, pointRadius: 4 }
+                ]
+            },
+            options: { ...commonOptions, interaction: { mode: 'index', intersect: false }, scales: {x: {...commonOptions.scales.x}, y: {...commonOptions.scales.y, stacked: true}}, plugins: { ...commonOptions.plugins, tooltip: { position: 'nearest' } } }
+        });
+
+        // MERCATO DEL LAVORO CHARTS
+        // Occupazione e Struttura
+        createChart('mainIndicatorsChart', {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Tasso Occupazione PU', data: [69.6, 69.2, 70.1], borderColor: colors.green, tension: 0.3, borderWidth: 3 },
+                    { label: 'Tasso Disoccupazione PU', data: [4.9, 5.2, 3.7], borderColor: colors.orange, tension: 0.3, borderWidth: 3 },
+                    { label: 'Tasso Occupazione Italia', data: [60.1, 61.5, 62.2], borderColor: colors.green, tension: 0.3, borderDash: [5, 5], borderWidth: 1.5 },
+                    { label: 'Tasso Disoccupazione Italia', data: [8.1, 7.7, 6.5], borderColor: colors.orange, tension: 0.3, borderDash: [5, 5], borderWidth: 1.5 }
+                ]
+            },
+            options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } } } }
+        });
+        
+        createChart('workersCompositionChart', {
+            type: 'bar',
+            data: {
+                labels: ['Dipendenti', 'Commercianti', 'Artigiani', 'Gest. Separata', 'Domestici', 'Agricoli Autonomi'],
+                datasets: [{
+                    label: 'Numero Lavoratori (2023)',
+                    data: [138925, 12217, 11987, 7149, 4868, 2744],
+                    backgroundColor: [colors.sky, colors.teal, colors.purple, colors.pink, colors.orange, colors.green],
+                    borderRadius: 5
+                }]
+            },
+            options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+        
+        createChart('genderPayGapChart', {
+            type: 'bar',
+            data: {
+                labels: ['Manifatturiero', 'Commercio', 'Alloggio/Ristorazione', 'Sanità', 'Costruzioni'],
+                datasets: [
+                    { label: 'Femmine', data: [78.1, 67.9, 51.3, 58.4, 68.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [102.6, 89.0, 60.6, 74.6, 90.5], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // Flussi e Contratti
+        createChart('hiresByContractChart', {
+            type: 'bar',
+            data: {
+                labels: ['T. Indeterminato', 'T. Determinato', 'Stagionale', 'Somministrazione', 'Intermittente'],
+                datasets: [
+                    { label: 'Assunzioni 2023', data: [8613, 19258, 7251, 5716, 11106], backgroundColor: 'rgba(56, 189, 248, 0.6)', borderRadius: 5 },
+                    { label: 'Assunzioni 2024', data: [7727, 18388, 7595, 5043, 12153], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        createChart('hiresTerminationsBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: ['T. Indeterminato', 'T. Determinato', 'Stagionale', 'Somministrazione', 'Intermittente'],
+                datasets: [
+                    { label: 'Assunzioni 2024', data: [7727, 18388, 7595, 5043, 12153], backgroundColor: colors.green, borderRadius: 5 },
+                    { label: 'Cessazioni 2024', data: [11130, 14409, 7561, 5114, 11840], backgroundColor: colors.red, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        createChart('partTimeIncidenceChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Marche', 'Italia'],
+                datasets: [
+                    { label: 'Donne', data: [48.1, 45.6, 44.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Uomini', data: [11.5, 12.9, 15.4], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } } } }
+        });
+
+        // CONTENZIOSO CHARTS
+        // Contenzioso Amministrativo
+        createChart('adminAppealsFlowChart', {
+            type: 'bar',
+            data: {
+                labels: ['Da Lavorare (Inizio Anno)', 'Pervenuti', 'Definiti', 'Da Lavorare (Fine Anno)'],
+                datasets: [{
+                    label: 'Numero Ricorsi',
+                    data: [25, 514, 500, 40],
+                    backgroundColor: [colors.orange, colors.sky, colors.green, colors.red],
+                    borderRadius: 5
+                }]
+            },
+            options: {...commonOptions, plugins: { legend: { display: false } } }
+        });
+        
+        // Contenzioso Giudiziario
+        createChart('judicialOutcomesChart', {
+            type: 'bar',
+            data: {
+                labels: ['Contenzioso Ordinario', 'ATP Invalidità Civile'],
+                datasets: [
+                    { label: 'Favorevole INPS', data: [67, 210], backgroundColor: colors.green, borderRadius: 5 },
+                    { label: 'Favorevole Utenti', data: [38, 344], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Altri Esiti', data: [19, 49], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+        
+        createChart('judicialCasesBySubjectChart', {
+            type: 'bar',
+            data: {
+                labels: ['Contributivo', 'Inv. Civile', 'Pensioni', 'Indebiti', 'Altri'],
+                datasets: [{
+                    label: 'Giudizi Iniziati',
+                    data: [71, 41, 25, 19, 14],
+                    backgroundColor: [colors.sky, colors.teal, colors.purple, colors.pink, colors.orange],
+                    borderRadius: 5
+                }]
+            },
+            options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+
+        createChart('pendingCasesChart', {
+            type: 'bar',
+            data: {
+                labels: ['Contenzioso Ordinario', 'Contenzioso ATP'],
+                datasets: [
+                    { label: 'Pendenza Inizio 2024', data: [160, 403], backgroundColor: 'rgba(248, 113, 113, 0.6)', borderRadius: 5 },
+                    { label: 'Pendenza Fine 2024', data: [206, 398], backgroundColor: colors.red, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+    });
+    </script>
 
     <!-- Scripts -->
     <script src="js/data.js"></script>
