@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prestazioni Pensionistiche - Pesaro e Urbino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-btn {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.2s ease-in-out;
+            padding-bottom: 8px;
+        }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active {
+            color: #2dd4bf; /* Verde acqua per questa dashboard */
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background-color: #2dd4bf;
+            border-radius: 2px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .zoomable { cursor: zoom-in; }
+        
+        #modal-overlay { transition: opacity 0.3s ease-in-out; }
+        
+        .card.zoomed {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Prestazioni Pensionistiche e Previdenziali</h1>
+            <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino</p>
+        </header>
+
+        <!-- Schede KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Pensionati Totali</h3>
+                <p class="text-4xl font-bold text-white mt-2">98.502</p>
+                <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Pensioni Liquidate 2024</h3>
+                <p class="text-4xl font-bold text-white mt-2">5.822</p>
+                <p class="text-sm text-slate-500 mt-1">Nuove pensioni IVS</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Efficienza Liquidazione</h3>
+                <p class="text-4xl font-bold text-green-400 mt-2">76,9%</p>
+                <p class="text-sm text-slate-500 mt-1">Gest. Privata liquidate < 30gg</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Anticipi Pensionistici</h3>
+                <p class="text-4xl font-bold text-white mt-2">356</p>
+                <p class="text-sm text-slate-500 mt-1">Domande accolte nel 2024</p>
+            </div>
+        </div>
+
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+            <button class="tab-btn active" data-tab="vigenti">Pensioni Vigenti</button>
+            <button class="tab-btn" data-tab="liquidate">Pensioni Liquidate</button>
+            <button class="tab-btn" data-tab="tempi">Tempi di Liquidazione</button>
+            <button class="tab-btn" data-tab="anticipi">Anticipi Pensionistici</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents" class="mt-8">
+            <!-- Pensioni Vigenti -->
+            <div id="vigenti" class="tab-content active space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Pensionati per Tipologia e Genere (2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Il numero di pensionati IVS (previdenziali) è quasi paritario tra i generi.</li>
+                        <li>Le <strong class="text-pink-400">donne</strong> sono nettamente maggioritarie tra i beneficiari di prestazioni assistenziali (pensioni/assegni sociali e invalidità civile).</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="pensionersByTypeChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Importo Medio Mensile Pensioni IVS per Genere e Gestione</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                             <li>Emerge un <strong class="text-red-400">gender gap</strong> significativo in tutte le gestioni, con gli <strong class="text-sky-400">uomini</strong> che percepiscono un importo medio mensile molto più elevato.</li>
+                             <li>Il divario è particolarmente marcato nel Fondo Pensioni Lavoratori Dipendenti (FPLD).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="averageAmountChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Età Media alla Decorrenza (Vecchiaia/Anticipate)</h3>
+                         <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>L'età di pensionamento per le <strong class="text-pink-400">donne</strong> è in costante e leggero aumento, attestandosi a 65 anni nel 2024.</li>
+                            <li>L'età per gli <strong class="text-sky-400">uomini</strong> rimane più stabile, intorno ai 63 anni.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="retirementAgeChart"></canvas></div>
+                    </div>
+                </div>
+                 <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Numero Pensioni IVS per Gestione (2024)</h3>
+                     <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>La maggior parte delle pensioni è erogata dalle gestioni dei <strong class="text-purple-400">Lavoratori Autonomi</strong> (37.4%) e dal <strong class="text-sky-400">Fondo Lavoratori Dipendenti</strong> (35.8%).</li>
+                        <li>Seguono i <strong class="text-teal-400">Dipendenti Pubblici</strong> con il 18.3% del totale.</li>
+                    </ul>
+                    <div class="chart-container"><canvas id="pensionsByFundChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Pensioni Liquidate -->
+            <div id="liquidate" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Pensioni IVS Liquidate (2021-2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Il numero totale di pensioni liquidate mostra una certa variabilità, con un picco nel 2022 e un calo nel 2023, seguito da una ripresa nel 2024.</li>
+                        <li>Il numero di pensioni liquidate alle <strong class="text-pink-400">donne</strong> è costantemente superiore a quello degli <strong class="text-sky-400">uomini</strong>.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="liquidatedPensionsTrendChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Liquidate per Sistema di Calcolo (2021-2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Il sistema <strong class="text-sky-400">Misto</strong> è predominante e stabile nel tempo.</li>
+                            <li>Si osserva un graduale calo del sistema <strong class="text-purple-400">Retributivo</strong> a favore di un leggero aumento del <strong class="text-teal-400">Contributivo</strong> puro.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="calculationSystemChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Pensioni Liquidate (2024)</h3>
+                         <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Le pensioni di <strong class="text-teal-400">Vecchiaia</strong> (31.9%) e <strong class="text-sky-400">Anzianità/Anticipate</strong> (29.2%) costituiscono la maggioranza delle liquidate.</li>
+                            <li>Seguono le pensioni ai <strong class="text-purple-400">Superstiti</strong> (28.4%) e di <strong class="text-pink-400">Invalidità</strong> (10.5%).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="liquidatedCompositionChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tempi di Liquidazione -->
+            <div id="tempi" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Performance di Liquidazione per Gestione (Entro 30 giorni, 2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>La provincia di Pesaro e Urbino mostra <strong class="text-green-400">performance eccellenti</strong> nella liquidazione delle pensioni.</li>
+                        <li>I <strong class="text-teal-400">Fondi Speciali</strong> registrano il risultato migliore, con il <strong class="text-teal-400">98%</strong> delle pratiche definite entro 30 giorni.</li>
+                        <li>Anche la <strong class="text-purple-400">Gestione Pubblica</strong> (78,9%) e la <strong class="text-sky-400">Gestione Privata</strong> (76,9%) mostrano ottimi livelli di efficienza.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="performanceByFundChart"></canvas></div>
+                </div>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione Tempi - Gestione Privata (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Oltre due terzi delle pensioni (<strong class="text-green-400">76,9%</strong>) vengono liquidate entro 30 giorni.</li>
+                            <li>Solo una piccola quota (<strong class="text-red-400">7,4%</strong>) richiede più di 90 giorni per la lavorazione.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="privateTimingDistributionChart"></canvas></div>
+                    </div>
+                     <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Confronto Performance vs Italia (Entro 30 gg)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La performance di Pesaro e Urbino è sostanzialmente <strong class="text-green-400">in linea o leggermente migliore</strong> della media nazionale per la Gestione Privata.</li>
+                             <li>Per la Gestione Pubblica, la provincia registra tempi leggermente <strong class="text-orange-400">più lenti</strong> rispetto alla media italiana.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="benchmarkTimingChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anticipi Pensionistici -->
+            <div id="anticipi" class="tab-content space-y-6">
+                 <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Domande Accolte per Principali Anticipi</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Si osserva un <strong class="text-red-400">drastico calo</strong> delle domande per <strong class="text-pink-400">Opzione Donna</strong>, passate da 218 nel 2022 a 39 nel 2024.</li>
+                        <li>Le pensioni "Quota" hanno visto un picco con <strong class="text-sky-400">Quota 100</strong> nel 2021 (non mostrato), per poi ridursi notevolmente con le misure successive.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="anticipiTrendChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Anticipi Pensionistici (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>L'<strong class="text-teal-400">APE Sociale</strong> è la forma di anticipo più utilizzata nel 2024, con 145 certificazioni accolte.</li>
+                            <li>Seguono <strong class="text-sky-400">Quota 103</strong> (100) e i <strong class="text-purple-400">Lavoratori Precoci</strong> (71).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="anticipiCompositionChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione per Genere "Quote" (2021-2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Tutte le forme di pensione "Quota" sono state utilizzate prevalentemente da <strong class="text-sky-400">uomini</strong>.</li>
+                            <li>Il divario di genere è stato particolarmente accentuato in <strong class="text-red-400">Quota 103</strong>.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="quoteGenderChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const activeContent = document.getElementById(tab.dataset.tab);
+                activeContent.classList.add('active');
+                
+                // Render charts only when tab is activated
+                renderChartsForTab(activeContent);
+            });
+        });
+        
+        // Initial render for the default active tab
+        renderChartsForTab(document.querySelector('.tab-content.active'));
+
+
+        const overlay = document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    overlay.classList.remove('hidden');
+                }
+            });
+        });
+        overlay.addEventListener('click', unzoom);
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || chartInstances.has(canvas)) return;
+            
+            const chart = new Chart(canvas, config);
+            chartInstances.set(canvas, chart);
+        }
+
+        function renderChartsForTab(tabElement) {
+            if (!tabElement) return;
+
+            if (tabElement.id === 'vigenti') {
+                createChart('pensionersByTypeChart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['Femmine', 'Maschi'],
+                        datasets: [
+                            { label: 'Pensionati IVS', data: [45645, 43460], backgroundColor: colors.teal, borderRadius: 5 },
+                            { label: 'Beneficiari Assistenziali', data: [14394, 8566], backgroundColor: colors.purple, borderRadius: 5 }
+                        ]
+                    },
+                    options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+
+                createChart('averageAmountChart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['FPLD', 'Dip. Pubblici', 'Lavoratori Autonomi'],
+                        datasets: [
+                            { label: 'Femmine', data: [905.5, 1875.4, 754.4], backgroundColor: colors.pink, borderRadius: 5 },
+                            { label: 'Maschi', data: [1789.1, 2511.7, 1330.4], backgroundColor: colors.sky, borderRadius: 5 }
+                        ]
+                    },
+                    options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw.toFixed(2)} €` } } } }
+                });
+
+                createChart('retirementAgeChart', {
+                    type: 'line',
+                    data: {
+                        labels: ['2022', '2023', '2024'],
+                        datasets: [
+                            { label: 'Femmine', data: [64.4, 64.9, 65.0], borderColor: colors.pink, tension: 0.3 },
+                            { label: 'Maschi', data: [63.4, 63.1, 63.2], borderColor: colors.sky, tension: 0.3 }
+                        ]
+                    },
+                    options: commonOptions
+                });
+
+                createChart('pensionsByFundChart', {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Lavoratori Autonomi', 'FPLD', 'Dipendenti Pubblici', 'Altre Gestioni'],
+                        datasets: [{
+                            data: [42269, 40466, 20684, 9563],
+                            backgroundColor: [colors.purple, colors.sky, colors.teal, colors.orange],
+                            borderColor: '#1e293b'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+                });
+            }
+            else if (tabElement.id === 'liquidate') {
+                 createChart('liquidatedPensionsTrendChart', {
+                    type: 'line',
+                    data: {
+                        labels: ['2021', '2022', '2023', '2024'],
+                        datasets: [
+                            { label: 'Totale', data: [5818, 6030, 5508, 5822], borderColor: colors.teal, tension: 0.3, borderWidth: 3 },
+                            { label: 'Femmine', data: [3187, 3231, 2863, 2960], borderColor: colors.pink, tension: 0.3, borderDash: [5, 5] },
+                            { label: 'Maschi', data: [2631, 2799, 2645, 2862], borderColor: colors.sky, tension: 0.3, borderDash: [5, 5] }
+                        ]
+                    },
+                    options: commonOptions
+                });
+
+                createChart('calculationSystemChart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['2021', '2022', '2023', '2024'],
+                        datasets: [
+                            { label: 'Retributivo', data: [1561, 1453, 1301, 1262], backgroundColor: colors.purple, borderRadius: 5 },
+                            { label: 'Misto', data: [3228, 3240, 3022, 3275], backgroundColor: colors.sky, borderRadius: 5 },
+                            { label: 'Contributivo', data: [613, 821, 746, 793], backgroundColor: colors.teal, borderRadius: 5 }
+                        ]
+                    },
+                    options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+                
+                createChart('liquidatedCompositionChart', {
+                     type: 'doughnut',
+                    data: {
+                        labels: ['Vecchiaia', 'Anzianità/Anticipate', 'Superstiti', 'Invalidità'],
+                        datasets: [{
+                            data: [1698, 1559, 1513, 560],
+                            backgroundColor: [colors.teal, colors.sky, colors.purple, colors.pink],
+                            borderColor: '#1e293b'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+                });
+            }
+            else if (tabElement.id === 'tempi') {
+                createChart('performanceByFundChart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['Fondi Speciali', 'Gestione Pubblica', 'Gestione Privata'],
+                        datasets: [{
+                            label: '% liquidate entro 30 giorni',
+                            data: [98.0, 78.9, 76.9],
+                            backgroundColor: [colors.teal, colors.purple, colors.sky],
+                            borderRadius: 5
+                        }]
+                    },
+                    options: { 
+                        ...commonOptions, 
+                        indexAxis: 'y', 
+                        plugins: { legend: { display: false } }, 
+                        scales: { 
+                            x: { 
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: '#94a3b8', callback: (v) => v + '%' } 
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: '#94a3b8' }
+                            }
+                        } 
+                    }
+                });
+
+                 createChart('privateTimingDistributionChart', {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Entro 30 gg', '31-60 gg', '61-90 gg', 'Oltre 90 gg'],
+                        datasets: [{
+                            data: [76.9, 10.9, 4.9, 7.4],
+                            backgroundColor: [colors.green, colors.orange, colors.pink, colors.red],
+                            borderColor: '#1e293b'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' }}, tooltip: {callbacks: {label: (c) => `${c.label}: ${c.raw}%`}}}}
+                });
+
+                createChart('benchmarkTimingChart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['Gestione Privata', 'Gestione Pubblica'],
+                        datasets: [
+                            { label: 'Pesaro e Urbino', data: [76.9, 78.9], backgroundColor: colors.teal, borderRadius: 5 },
+                            { label: 'Italia', data: [78.6, 82.8], backgroundColor: 'rgba(45, 212, 191, 0.4)', borderRadius: 5 }
+                        ]
+                    },
+                    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ticks: { callback: (v) => v + '%' } } } }
+                });
+            }
+            else if (tabElement.id === 'anticipi') {
+                 createChart('anticipiTrendChart', {
+                    type: 'line',
+                    data: {
+                        labels: ['2022', '2023', '2024'],
+                        datasets: [
+                            { label: 'Opzione Donna', data: [218, 101, 39], borderColor: colors.pink, tension: 0.3},
+                            { label: 'Quota 102/103', data: [25, 127, 100], borderColor: colors.sky, tension: 0.3}
+                        ]
+                    },
+                    options: commonOptions
+                });
+                
+                createChart('anticipiCompositionChart', {
+                     type: 'doughnut',
+                    data: {
+                        labels: ['APE Sociale', 'Quota 103', 'Lavoratori Precoci', 'Opzione Donna', 'Lavori Usuranti'],
+                        datasets: [{
+                            data: [145, 100, 71, 39, 1],
+                            backgroundColor: [colors.teal, colors.sky, colors.purple, colors.pink, colors.orange],
+                            borderColor: '#1e293b'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+                });
+
+                createChart('quoteGenderChart', {
+                    type: 'bar',
+                    data: {
+                        labels: ['Quota 100 (2021)', 'Quota 102 (2022)', 'Quota 103 (2023)', 'Quota 103 (2024)'],
+                        datasets: [
+                            { label: 'Femmine', data: [268, 11, 24, 18], backgroundColor: colors.pink, borderRadius: 5 },
+                            { label: 'Maschi', data: [425, 14, 103, 82], backgroundColor: colors.sky, borderRadius: 5 }
+                        ]
+                    },
+                    options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+            }
+        }
+    });
+    </script>
+</body>
+</html>
+
+

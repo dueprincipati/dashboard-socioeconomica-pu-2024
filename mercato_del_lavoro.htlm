@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercato del Lavoro - Pesaro e Urbino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-btn {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.2s ease-in-out;
+            padding-bottom: 8px;
+        }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active {
+            color: #4ade80; /* Verde per la nuova palette */
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background-color: #4ade80;
+            border-radius: 2px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .zoomable { cursor: zoom-in; }
+        
+        #modal-overlay { transition: opacity 0.3s ease-in-out; }
+        
+        .card.zoomed {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Mercato del Lavoro</h1>
+            <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+        </header>
+
+        <!-- Schede KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Tasso di Occupazione</h3>
+                <p class="text-4xl font-bold text-white mt-2">70,1%</p>
+                <p class="text-sm text-slate-500 mt-1">Popolazione 15-64 anni (2024)</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Tasso di Disoccupazione</h3>
+                <p class="text-4xl font-bold text-green-400 mt-2">3,7%</p>
+                <p class="text-sm text-slate-500 mt-1">Popolazione 15-74 anni (2024)</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Lavoratori Totali</h3>
+                <p class="text-4xl font-bold text-white mt-2">173.233</p>
+                <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2023</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Incidenza Part-Time (Donne)</h3>
+                <p class="text-4xl font-bold text-white mt-2">48,1%</p>
+                <p class="text-sm text-slate-500 mt-1">Sulle dipendenti private (2023)</p>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+            <button class="tab-btn active" data-tab="occupazione">Occupazione e Struttura</button>
+            <button class="tab-btn" data-tab="flussi">Flussi e Contratti</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents" class="mt-8">
+            <!-- Occupazione e Struttura -->
+            <div id="occupazione" class="tab-content active space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Indicatori del Mercato del Lavoro (2022-2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Il <strong class="text-green-400">tasso di occupazione</strong> provinciale (70,1%) è costantemente superiore alla media regionale e nazionale.</li>
+                        <li>Il <strong class="text-green-400">tasso di disoccupazione</strong> (3,7%) è in netto calo nel 2024 e si attesta su valori significativamente inferiori rispetto a Marche e Italia.</li>
+                        <li>Il <strong class="text-slate-100">tasso di inattività</strong> (27,4%) è anch'esso più basso delle medie di riferimento, indicando una maggiore partecipazione al mercato del lavoro.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="mainIndicatorsChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Lavoratori per Posizione (2023)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La stragrande maggioranza degli occupati (circa 80%) è costituita da <strong class="text-sky-400">lavoratori dipendenti</strong>.</li>
+                            <li>Seguono a distanza <strong class="text-teal-400">Commercianti</strong> (7%) e <strong class="text-purple-400">Artigiani</strong> (6,9%).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="workersCompositionChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Divario Retributivo di Genere (€/giorno, 2023)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Esiste un <strong class="text-red-400">significativo divario retributivo</strong> a sfavore delle donne in quasi tutti i settori del privato.</li>
+                            <li>Il gap è particolarmente marcato nel settore <strong class="text-pink-400">manifatturiero</strong> (€78,1 vs €102,6) e nel <strong class="text-pink-400">commercio</strong> (€67,9 vs €89,0).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="genderPayGapChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Flussi e Contratti -->
+            <div id="flussi" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Tipologie Contrattuali nelle Assunzioni (2023 vs 2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Il <strong class="text-sky-400">lavoro a tempo determinato</strong> rappresenta la principale modalità di assunzione, sebbene in leggero calo nel 2024.</li>
+                        <li>Crescono i contratti <strong class="text-purple-400">intermittenti</strong>, mentre calano quelli a <strong class="text-green-400">tempo indeterminato</strong> e in <strong class="text-orange-400">somministrazione</strong>.</li>
+                        <li>I contratti <strong class="text-teal-400">stagionali</strong> rimangono stabili, legati alla vocazione turistica del territorio.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="hiresByContractChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Saldo Assunzioni/Cessazioni per Contratto (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Nel 2024 si registra un <strong class="text-red-400">saldo negativo per i contratti a tempo indeterminato</strong>, con più cessazioni che assunzioni.</li>
+                            <li>Il saldo è invece <strong class="text-green-400">positivo per i contratti a tempo determinato</strong>, che compensano parzialmente la perdita di posti stabili.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="hiresTerminationsBalanceChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Lavoro Part-Time per Genere (Dipendenti, 2023)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Il part-time è una caratteristica prevalentemente femminile: quasi <strong class="text-pink-400">una lavoratrice dipendente su due</strong> ha un contratto a tempo parziale (48,1%).</li>
+                            <li>L'incidenza per gli <strong class="text-sky-400">uomini</strong> è molto più bassa (11,5%), seppur inferiore alla media nazionale.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="partTimeIncidenceChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        const overlay = document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    overlay.classList.remove('hidden');
+                }
+            });
+        });
+        overlay.addEventListener('click', unzoom);
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const chart = new Chart(canvas, config);
+            chartInstances.set(canvas, chart);
+            return chart;
+        }
+
+        // --- OCCUPAZIONE E STRUTTURA ---
+        createChart('mainIndicatorsChart', {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Tasso Occupazione PU', data: [69.6, 69.2, 70.1], borderColor: colors.green, tension: 0.3, borderWidth: 3 },
+                    { label: 'Tasso Disoccupazione PU', data: [4.9, 5.2, 3.7], borderColor: colors.orange, tension: 0.3, borderWidth: 3 },
+                    { label: 'Tasso Occupazione Italia', data: [60.1, 61.5, 62.2], borderColor: colors.green, tension: 0.3, borderDash: [5, 5], borderWidth: 1.5 },
+                    { label: 'Tasso Disoccupazione Italia', data: [8.1, 7.7, 6.5], borderColor: colors.orange, tension: 0.3, borderDash: [5, 5], borderWidth: 1.5 }
+                ]
+            },
+            options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } } } }
+        });
+        
+        createChart('workersCompositionChart', {
+            type: 'bar',
+            data: {
+                labels: ['Dipendenti', 'Commercianti', 'Artigiani', 'Gest. Separata', 'Domestici', 'Agricoli Autonomi'],
+                datasets: [{
+                    label: 'Numero Lavoratori (2023)',
+                    data: [138925, 12217, 11987, 7149, 4868, 2744],
+                    backgroundColor: [colors.sky, colors.teal, colors.purple, colors.pink, colors.orange, colors.green],
+                    borderRadius: 5
+                }]
+            },
+            options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+        
+        createChart('genderPayGapChart', {
+            type: 'bar',
+            data: {
+                labels: ['Manifatturiero', 'Commercio', 'Alloggio/Ristorazione', 'Sanità', 'Costruzioni'],
+                datasets: [
+                    { label: 'Femmine', data: [78.1, 67.9, 51.3, 58.4, 68.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [102.6, 89.0, 60.6, 74.6, 90.5], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // --- FLUSSI E CONTRATTI ---
+        createChart('hiresByContractChart', {
+            type: 'bar',
+            data: {
+                labels: ['T. Indeterminato', 'T. Determinato', 'Stagionale', 'Somministrazione', 'Intermittente'],
+                datasets: [
+                    { label: 'Assunzioni 2023', data: [8613, 19258, 7251, 5716, 11106], backgroundColor: 'rgba(56, 189, 248, 0.6)', borderRadius: 5 },
+                    { label: 'Assunzioni 2024', data: [7727, 18388, 7595, 5043, 12153], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        createChart('hiresTerminationsBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: ['T. Indeterminato', 'T. Determinato', 'Stagionale', 'Somministrazione', 'Intermittente'],
+                datasets: [
+                    { label: 'Assunzioni 2024', data: [7727, 18388, 7595, 5043, 12153], backgroundColor: colors.green, borderRadius: 5 },
+                    { label: 'Cessazioni 2024', data: [11130, 14409, 7561, 5114, 11840], backgroundColor: colors.red, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        createChart('partTimeIncidenceChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Marche', 'Italia'],
+                datasets: [
+                    { label: 'Donne', data: [48.1, 45.6, 44.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Uomini', data: [11.5, 12.9, 15.4], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } } } }
+        });
+    });
+    </script>
+</body>
+</html>

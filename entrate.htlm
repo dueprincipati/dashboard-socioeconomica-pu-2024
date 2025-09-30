@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrate e Vigilanza - Pesaro e Urbino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-btn {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.2s ease-in-out;
+            padding-bottom: 8px;
+        }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active {
+            color: #c084fc; /* Viola per la nuova palette */
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background-color: #c084fc;
+            border-radius: 2px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .zoomable { cursor: zoom-in; }
+        
+        #modal-overlay { transition: opacity 0.3s ease-in-out; }
+        
+        .card.zoomed {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Entrate e Vigilanza</h1>
+            <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2022-2024)</p>
+        </header>
+
+        <!-- Schede KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Entrate Contributive</h3>
+                <p class="text-4xl font-bold text-white mt-2">€675,3 <span class="text-2xl">Mln</span></p>
+                <p class="text-sm text-slate-500 mt-1">Riscossioni ordinarie 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">% DURC Irregolari</h3>
+                <p class="text-4xl font-bold text-green-400 mt-2">9,7%</p>
+                <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Accertato da Vigilanza</h3>
+                <p class="text-4xl font-bold text-white mt-2">€9,2 <span class="text-2xl">Mln</span></p>
+                <p class="text-sm text-slate-500 mt-1">Contributi e sanzioni 2024</p>
+            </div>
+             <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Riscossione Coattiva</h3>
+                <p class="text-4xl font-bold text-white mt-2">€22,4 <span class="text-2xl">Mln</span></p>
+                <p class="text-sm text-slate-500 mt-1">Recupero tramite AdER 2024</p>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+            <button class="tab-btn active" data-tab="entrate">Entrate</button>
+            <button class="tab-btn" data-tab="vigilanza">Vigilanza e Regolarità</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents" class="mt-8">
+            <!-- Entrate -->
+            <div id="entrate" class="tab-content active space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Fonti di Entrata (2022-2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Le <strong class="text-sky-400">riscossioni ordinarie</strong> mostrano una crescita costante e robusta, superando i 675 milioni nel 2024.</li>
+                        <li>Il <strong class="text-teal-400">recupero crediti in fase amministrativa</strong> si mantiene su valori elevati, seppur con una flessione nel 2024.</li>
+                        <li>La <strong class="text-purple-400">riscossione coattiva</strong> ha registrato un picco significativo nel 2024, quasi raddoppiando rispetto all'anno precedente.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="contributionSourcesChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Riscossione Coattiva (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Oltre la metà (54,7%) del recupero coattivo provinciale proviene da <strong class="text-sky-400">Aziende Uniemens</strong>.</li>
+                            <li>Seguono le gestioni dei <strong class="text-teal-400">Commercianti</strong> (22,7%) e degli <strong class="text-purple-400">Artigiani</strong> (16,6%).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="coattivaCompositionChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Variazione Entrate Ordinarie (2023-2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La provincia di Pesaro e Urbino registra una <strong class="text-green-400">crescita delle entrate del +4,5%</strong>.</li>
+                            <li>La performance è nettamente superiore alla media della <strong class="text-slate-100">Regione Marche (+2,2%)</strong> e a quella <strong class="text-slate-100">nazionale (+3,3%)</strong>.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="ordinaryGrowthChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Vigilanza e Regolarità -->
+            <div id="vigilanza" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Risultati Attività Ispettiva (2023 vs 2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Forte intensificazione dell'attività di vigilanza nel 2024: le <strong class="text-sky-400">ispezioni sono aumentate del 44%</strong>.</li>
+                        <li>L'importo totale accertato tra contributi e sanzioni è <strong class="text-green-400">quasi raddoppiato</strong>, passando da 4,7 a 9,2 milioni di euro.</li>
+                        <li>Aumenta anche il numero di <strong class="text-slate-100">lavoratori interessati</strong> e di <strong class="text-slate-100">aziende trovate irregolari</strong>.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="inspectionResultsChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Irregolarità DURC (2022-2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La percentuale di DURC irregolari nella provincia è in <strong class="text-green-400">costante calo</strong>, scendendo al 9,7% nel 2024.</li>
+                            <li>Il dato provinciale si conferma <strong class="text-green-400">nettamente migliore</strong> rispetto alla media regionale (10,3%) e soprattutto a quella nazionale (16,2%).</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="durcIrregularityChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Risultati Vigilanza Documentale (2023 vs 2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>L'attività di vigilanza documentale è <strong class="text-sky-400">aumentata di oltre il 50%</strong> nel 2024.</li>
+                            <li>Le <strong class="text-orange-400">irregolarità riscontrate</strong> sono quasi raddoppiate, passando da 376 a 717.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="documentalResultsChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        const overlay = document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    overlay.classList.remove('hidden');
+                }
+            });
+        });
+        overlay.addEventListener('click', unzoom);
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const chart = new Chart(canvas, config);
+            chartInstances.set(canvas, chart);
+            return chart;
+        }
+
+        // --- ENTRATE ---
+        createChart('contributionSourcesChart', {
+            type: 'bar',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Riscossioni Ordinarie', data: [622795440.27, 646153457.06, 675251190.81], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'Recupero Amministrativo', data: [50333324.69, 53825366.72, 49134238.67], backgroundColor: colors.teal, borderRadius: 5 },
+                    { label: 'Riscossione Coattiva', data: [14581190.56, 12175738.84, 22418626.81], backgroundColor: colors.purple, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, type: 'logarithmic', ticks: { callback: (value) => (value / 1000000).toLocaleString('it-IT') + 'M' } } } }
+        });
+        
+        createChart('coattivaCompositionChart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Aziende Uniemens', 'Commercianti', 'Artigiani', 'Agricoli', 'Altri'],
+                datasets: [{
+                    data: [12253147.94, 5080377.02, 3717533.06, 941235.29, 426333.5],
+                    backgroundColor: [colors.sky, colors.teal, colors.purple, colors.green, colors.orange],
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } }, tooltip: { callbacks: { label: (c) => `${c.label}: € ${c.raw.toLocaleString('it-IT', {minimumFractionDigits: 0})}` } } } }
+        });
+        
+        createChart('ordinaryGrowthChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [{ 
+                    label: 'Crescita % 2023-2024', 
+                    data: [4.5, 2.2, 3.3], 
+                    backgroundColor: [colors.green, colors.teal, colors.sky], 
+                    borderRadius: 5 
+                }]
+            },
+            options: { ...commonOptions, plugins: { legend: {display: false}, tooltip: { callbacks: { label: (c) => `Variazione: ${c.raw.toFixed(1)}%` } } } }
+        });
+
+        // --- VIGILANZA E REGOLARITÀ ---
+        createChart('inspectionResultsChart', {
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [
+                    { label: 'Importo Accertato (Mln €)', data: [4732765, 9231923], backgroundColor: colors.purple, borderRadius: 5, yAxisID: 'y' },
+                    { label: 'Numero Ispezioni', data: [128, 185], backgroundColor: colors.sky, borderRadius: 5, yAxisID: 'y1' }
+                ]
+            },
+            options: { ...commonOptions, scales: { y: { position: 'left', title: { display: true, text: 'Importo in €' }, ticks: { callback: (value) => (value / 1000000).toLocaleString('it-IT') + 'M' } }, y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Numero' } } } }
+        });
+        
+        createChart('durcIrregularityChart', {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Pesaro e Urbino', data: [11.3, 10.7, 9.7], borderColor: colors.green, tension: 0.3, borderWidth: 3 },
+                    { label: 'Regione Marche', data: [12.6, 10.8, 10.3], borderColor: colors.teal, tension: 0.3 },
+                    { label: 'Italia', data: [17.3, 16.3, 16.2], borderColor: colors.orange, tension: 0.3 }
+                ]
+            },
+            options: { ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } } } }
+        });
+
+        createChart('documentalResultsChart', {
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [
+                    { label: 'Verifiche Documentali', data: [739, 1175], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'Irregolarità Riscontrate', data: [376, 717], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+    });
+    </script>
+</body>
+</html>

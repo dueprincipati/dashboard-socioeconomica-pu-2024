@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relazioni con l'Utenza - Pesaro e Urbino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-btn {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.2s ease-in-out;
+            padding-bottom: 8px;
+        }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active {
+            color: #2dd4bf; /* Verde/Teal per questa dashboard */
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background-color: #2dd4bf;
+            border-radius: 2px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .zoomable { cursor: zoom-in; }
+        
+        #modal-overlay { transition: opacity 0.3s ease-in-out; }
+        
+        .card.zoomed {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Relazioni con l'Utenza</h1>
+            <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+        </header>
+
+        <!-- Schede KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Contatti Totali</h3>
+                <p class="text-4xl font-bold text-white mt-2">16.951</p>
+                <p class="text-sm text-slate-500 mt-1">Info I e II livello (2024)</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Pratiche da Cittadini</h3>
+                <p class="text-4xl font-bold text-white mt-2">39%</p>
+                <p class="text-sm text-slate-500 mt-1">Sul totale pratiche 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Comunicazioni Digitali</h3>
+                <p class="text-4xl font-bold text-white mt-2">80.476</p>
+                <p class="text-sm text-slate-500 mt-1">Cassetto, COMBIPAT, PEC (2024)</p>
+            </div>
+             <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Canale Preferito</h3>
+                <p class="text-4xl font-bold text-sky-400 mt-2">Sportello</p>
+                <p class="text-sm text-slate-500 mt-1">Accesso in sede I livello</p>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+            <button class="tab-btn active" data-tab="canali">Canali di Contatto</button>
+            <button class="tab-btn" data-tab="soggetti">Soggetti Richiedenti</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents" class="mt-8">
+            <!-- Canali di Contatto -->
+            <div id="canali" class="tab-content active space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Tipologia di Accesso all'Informazione (I Livello)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>L'<strong class="text-sky-400">accesso in sede</strong> si conferma il canale principale, sebbene in calo rispetto al 2023.</li>
+                        <li>Il <strong class="text-teal-400">ricontatto telefonico</strong> rimane una modalità stabile e rilevante.</li>
+                        <li>L'utilizzo del <strong class="text-purple-400">web meeting</strong>, seppur minoritario, è in crescita.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="infoLevel1Chart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Flussi Comunicazioni Digitali (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La <strong class="text-purple-400">PEC</strong> è il canale con i volumi più alti, seguita dal <strong class="text-sky-400">Cassetto Aziende</strong>.</li>
+                            <li>Per tutti i canali, i messaggi <strong class="text-green-400">in entrata</strong> (verso l'Istituto) sono superiori a quelli <strong class="text-orange-400">in uscita</strong>.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="digitalCommChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Consulenze (I vs II Livello)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                             <li>Le richieste di <strong class="text-sky-400">informazione di I livello</strong> sono diminuite nel 2024.</li>
+                            <li>Al contrario, le <strong class="text-teal-400">consulenze specialistiche di II livello</strong> mostrano un trend in crescita.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="consultingTrendChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Soggetti Richiedenti -->
+            <div id="soggetti" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Pratiche per Canale di Presentazione (2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>I <strong class="text-sky-400">Patronati</strong> si confermano il principale canale di presentazione delle pratiche (61%).</li>
+                        <li>Le pratiche presentate direttamente dai <strong class="text-teal-400">Cittadini</strong> o in proattività dall'Istituto rappresentano il 39% del totale.</li>
+                    </ul>
+                     <div class="chart-container"><canvas id="submissionChannelChart"></canvas></div>
+                </div>
+                <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Dettaglio Presentazione Pratiche per Argomento (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                             <li>L'intermediazione del <strong class="text-sky-400">Patronato</strong> è quasi totale per <strong class="text-slate-100">Invalidità Civile</strong> (92,3%) e <strong class="text-slate-100">Pensioni</strong> (89,8%).</li>
+                            <li>Al contrario, per le <strong class="text-teal-400">Prestazioni a sostegno della famiglia</strong>, il canale <strong class="text-slate-100">Cittadino</strong> è nettamente prevalente (77,6%).</li>
+                        </ul>
+                        <div class="chart-container" style="height: 50vh;"><canvas id="submissionDetailChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        const overlay = document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    overlay.classList.remove('hidden');
+                }
+            });
+        });
+        overlay.addEventListener('click', unzoom);
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const chart = new Chart(canvas, config);
+            chartInstances.set(canvas, chart);
+            return chart;
+        }
+
+        // --- CANALI DI CONTATTO ---
+        createChart('infoLevel1Chart', {
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [
+                    { label: 'Accesso in Sede', data: [11224, 8652], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'Ricontatto Telefonico', data: [5535, 5214], backgroundColor: colors.teal, borderRadius: 5 },
+                    { label: 'Web Meeting', data: [24, 63], backgroundColor: colors.purple, borderRadius: 5 }
+                ]
+            },
+            options: {...commonOptions, scales: { x: {...commonOptions.scales.x, stacked: true }, y: {...commonOptions.scales.y, stacked: true } } }
+        });
+        
+        createChart('digitalCommChart', {
+            type: 'bar',
+            data: {
+                labels: ['Cassetto Aziende', 'COMBIPAT', 'PEC'],
+                datasets: [
+                    { label: 'In Entrata', data: [15916, 8191, 19919], backgroundColor: colors.green, borderRadius: 5 },
+                    { label: 'In Uscita', data: [13834, 8206, 14410], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        createChart('consultingTrendChart', {
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [
+                    { label: 'Informazione I Livello', data: [16783, 13929], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'Consulenza II Livello', data: [2694, 3022], backgroundColor: colors.teal, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // --- SOGGETTI RICHIEDENTI ---
+        createChart('submissionChannelChart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Patronato', 'Cittadino'],
+                datasets: [{
+                    data: [61.0, 39.0],
+                    backgroundColor: [colors.sky, colors.teal],
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' }}, tooltip: {callbacks: {label: (c) => `${c.label}: ${c.raw.toFixed(1)}%`}}}}
+        });
+
+        createChart('submissionDetailChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pensioni', 'Inv. Civile', 'Assistenziali', 'Disoccupazione', 'Famiglia', 'Ricostituzioni'],
+                datasets: [
+                    { label: 'Patronato', data: [9904, 4131, 2071, 14509, 3418, 6161], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'Cittadino', data: [1126, 346, 571, 3521, 11840, 4141], backgroundColor: colors.teal, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, stacked: true }, y: { ...commonOptions.scales.y, stacked: true } } }
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panorama Socio-Demografico - Pesaro e Urbino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-btn {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.2s ease-in-out;
+            padding-bottom: 8px;
+        }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active {
+            color: #38bdf8; /* Blu per la nuova palette */
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background-color: #38bdf8;
+            border-radius: 2px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .zoomable { cursor: zoom-in; }
+        
+        #modal-overlay { transition: opacity 0.3s ease-in-out; }
+        
+        .card.zoomed {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Panorama Socio-Demografico</h1>
+            <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+        </header>
+
+        <!-- Schede KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Popolazione Totale</h3>
+                <p class="text-4xl font-bold text-white mt-2">349.882</p>
+                <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Popolazione 65+</h3>
+                <p class="text-4xl font-bold text-white mt-2">25,3%</p>
+                <p class="text-sm text-slate-500 mt-1">Quota sul totale (2024)</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Saldo Naturale</h3>
+                <p class="text-4xl font-bold text-red-400 mt-2">-1.883</p>
+                <p class="text-sm text-slate-500 mt-1">Differenza nascite/decessi 2023</p>
+            </div>
+             <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Speranza di Vita (Donne)</h3>
+                <p class="text-4xl font-bold text-white mt-2">86,1</p>
+                <p class="text-sm text-slate-500 mt-1">Anni, alla nascita (2023)</p>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+            <button class="tab-btn active" data-tab="struttura">Struttura Popolazione</button>
+            <button class="tab-btn" data-tab="dinamica">Dinamica Demografica</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents" class="mt-8">
+            <!-- Struttura Popolazione -->
+            <div id="struttura" class="tab-content active space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Confronto Piramide delle Età (% Popolazione, 2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>La provincia di Pesaro e Urbino ha una quota di <strong class="text-slate-100">popolazione anziana (25,3%)</strong> leggermente superiore alla media nazionale (24,4%).</li>
+                        <li>La fascia di popolazione in età lavorativa <strong class="text-sky-400">(15-64 anni)</strong> è in linea con i dati regionali e nazionali.</li>
+                         <li>La percentuale di giovani <strong class="text-teal-400">(0-14 anni)</strong> è più bassa rispetto alla media italiana, evidenziando un indice di natalità ridotto.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="agePyramidChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione Popolazione per Genere (2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La popolazione provinciale è composta per il <strong class="text-pink-400">50,8% da donne</strong> e per il <strong class="text-sky-400">49,2% da uomini</strong>.</li>
+                            <li>Questa distribuzione è perfettamente allineata con l'andamento regionale e nazionale.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="genderDistributionChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Speranza di Vita alla Nascita (2023)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>La speranza di vita a Pesaro e Urbino è <strong class="text-green-400">superiore alla media italiana</strong>, sia per le donne che per gli uomini.</li>
+                            <li>Le <strong class="text-pink-400">donne</strong> hanno un'aspettativa di vita di <strong class="text-pink-400">86,1 anni</strong>, mentre gli <strong class="text-sky-400">uomini</strong> di <strong class="text-sky-400">82,2 anni</strong>.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="lifeExpectancyChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Dinamica Demografica -->
+            <div id="dinamica" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Saldo Naturale (2013-2023)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Il saldo naturale è <strong class="text-red-400">costantemente negativo</strong> nell'ultimo decennio, indicando un numero di decessi superiore a quello delle nascite.</li>
+                        <li>Il picco negativo è stato raggiunto nel <strong class="text-red-500">2020</strong>, in concomitanza con la pandemia, con un saldo di -2.755.</li>
+                        <li>Il calo delle nascite è un trend costante, passato da oltre 3.000 nel 2013 a circa 2.000 nel 2023.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="naturalBalanceChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Flussi Migratori con l'Estero (2013-2023)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Il numero di <strong class="text-green-400">immigrati</strong> dall'estero è stabilmente superiore a quello degli <strong class="text-orange-400">emigrati</strong>.</li>
+                             <li>Il saldo migratorio è quindi <strong class="text-slate-100">costantemente positivo</strong>, contribuendo a rallentare il calo demografico.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="migrationFlowChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Saldo Demografico (2013-2023)</h3>
+                         <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Il <strong class="text-green-400">saldo migratorio positivo</strong> ha parzialmente compensato il <strong class="text-red-400">saldo naturale negativo</strong> fino al 2019.</li>
+                            <li>Dal 2020, il calo delle nascite e l'aumento dei decessi hanno reso il <strong class="text-purple-400">saldo demografico complessivo negativo</strong>.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="demographicBalanceChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        const overlay = document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    overlay.classList.remove('hidden');
+                }
+            });
+        });
+        overlay.addEventListener('click', unzoom);
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            const chart = new Chart(canvas, config);
+            chartInstances.set(canvas, chart);
+            return chart;
+        }
+
+        // --- STRUTTURA POPOLAZIONE ---
+        createChart('agePyramidChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: '0-14 anni', data: [11.8, 11.6, 12.2], backgroundColor: colors.teal, borderRadius: 5 },
+                    { label: '15-64 anni', data: [63.0, 62.2, 63.5], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: '65 e oltre', data: [25.3, 26.2, 24.4], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        createChart('genderDistributionChart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Femmine', 'Maschi'],
+                datasets: [{
+                    data: [50.8, 49.2],
+                    backgroundColor: [colors.pink, colors.sky],
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#cbd5e1' } },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } }
+                }
+            }
+        });
+        
+        createChart('lifeExpectancyChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: 'Femmine', data: [86.1, 85.9, 85.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [82.2, 81.9, 81.0], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: false, suggestedMin: 80 } } }
+        });
+
+        // --- DINAMICA DEMOGRAFICA ---
+        const years = ['2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023'];
+        createChart('naturalBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { type: 'line', label: 'Saldo Naturale', data: [-717, -728, -1137, -1089, -1370, -1414, -1666, -2755, -2018, -2270, -1883], borderColor: colors.purple, tension: 0.3, yAxisID: 'y1' },
+                    { label: 'Nascite', data: [3076, 2931, 2840, 2717, 2528, 2378, 2268, 2161, 2182, 2122, 2036], backgroundColor: colors.green, borderRadius: 5, yAxisID: 'y' },
+                    { label: 'Decessi', data: [3793, 3659, 3977, 3806, 3898, 3792, 3934, 4916, 4200, 4392, 3919], backgroundColor: colors.red, borderRadius: 5, yAxisID: 'y' }
+                ]
+            },
+            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { position: 'left', title: { display: true, text: 'Nascite / Decessi' } }, y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Saldo' } } } }
+        });
+        
+        createChart('migrationFlowChart', {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    { label: 'Immigrati', data: [1888, 1774, 1437, 1629, 1700, 1894, 1843, 1618, 1630, 1626, 1758], borderColor: colors.green, tension: 0.3 },
+                    { label: 'Emigrati', data: [508, 538, 635, 702, 683, 790, 665, 748, 564, 642, 653], borderColor: colors.orange, tension: 0.3 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        createChart('demographicBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { label: 'Saldo Naturale', data: [-717, -728, -1137, -1089, -1370, -1414, -1666, -2755, -2018, -2270, -1883], backgroundColor: colors.red, borderRadius: 5 },
+                    { label: 'Saldo Migratorio', data: [1380, 1236, 802, 927, 1017, 1104, 1178, 870, 1066, 984, 1105], backgroundColor: colors.green, borderRadius: 5 },
+                    { type: 'line', label: 'Saldo Demografico Totale', data: [663, 508, -335, -162, -353, -310, -488, -1885, -952, -1286, -778], borderColor: colors.purple, tension: 0.3, pointBackgroundColor: colors.purple, pointRadius: 4 }
+                ]
+            },
+            options: { ...commonOptions, interaction: { mode: 'index', intersect: false }, scales: {x: {...commonOptions.scales.x}, y: {...commonOptions.scales.y, stacked: true}}, plugins: { ...commonOptions.plugins, tooltip: { position: 'nearest' } } }
+        });
+    });
+    </script>
+</body>
+</html>

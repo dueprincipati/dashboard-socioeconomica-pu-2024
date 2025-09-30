@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prestazioni Assistenziali e Sociali - Pesaro e Urbino</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-btn {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.2s ease-in-out;
+            padding-bottom: 8px;
+        }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active {
+            color: #f472b6; /* Rosa/Fucsia per questa dashboard */
+            font-weight: 600;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background-color: #f472b6;
+            border-radius: 2px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .zoomable { cursor: zoom-in; }
+        
+        #modal-overlay { transition: opacity 0.3s ease-in-out; }
+        
+        .card.zoomed {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white">Prestazioni Assistenziali e Sociali</h1>
+            <p class="text-lg text-slate-400 mt-1">Provincia di Pesaro e Urbino (Dati 2023-2024)</p>
+        </header>
+
+        <!-- Schede KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Prestazioni Inv. Civile</h3>
+                <p class="text-4xl font-bold text-white mt-2">21.530</p>
+                <p class="text-sm text-slate-500 mt-1">Prestazioni vigenti 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Nuclei Assegno Unico</h3>
+                <p class="text-4xl font-bold text-white mt-2">38.226</p>
+                <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+            </div>
+            <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Beneficiari ADI</h3>
+                <p class="text-4xl font-bold text-white mt-2">1.737</p>
+                <p class="text-sm text-slate-500 mt-1">Nuova misura 2024</p>
+            </div>
+             <div class="card zoomable">
+                <h3 class="text-slate-400 font-semibold text-md">Tempo Medio Inv. Civile</h3>
+                <p class="text-4xl font-bold text-red-400 mt-2">162 gg</p>
+                <p class="text-sm text-slate-500 mt-1">Dato aggiornato al 2024</p>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700">
+            <button class="tab-btn active" data-tab="invalidita">Invalidità Civile</button>
+            <button class="tab-btn" data-tab="sostegno">Sostegno al Reddito</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents" class="mt-8">
+            <!-- Invalidità Civile -->
+            <div id="invalidita" class="tab-content active space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Prestazioni Vigenti per Genere e Tipologia (2024)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>L'<strong class="text-sky-400">Indennità di Accompagnamento</strong> costituisce la maggioranza delle prestazioni (73,7%).</li>
+                        <li>In entrambe le categorie, le <strong class="text-pink-400">donne</strong> rappresentano la maggioranza dei beneficiari, in modo particolare per l'indennità di accompagnamento.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="prestazioniVigentiChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Andamento Liquidazioni (2021-2024)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Il numero totale di nuove prestazioni liquidate mostra una <strong class="text-slate-100">sostanziale stabilità</strong> negli ultimi 4 anni, con circa 3.500 nuove liquidazioni annue.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="liquidazioniTrendChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Tempi Medi di Definizione (Giorni)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Nel 2024 si registra un <strong class="text-red-400">aumento dei tempi medi totali</strong> (162 gg vs 142 gg), dovuto all'allungamento della <strong class="text-orange-400">fase sanitaria</strong>.</li>
+                            <li>I tempi provinciali sono in linea con la media nazionale ma superiori a quella regionale.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="tempiDefinizioneChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sostegno al Reddito -->
+            <div id="sostegno" class="tab-content space-y-6">
+                <div class="card zoomable">
+                    <h3 class="font-bold text-xl text-slate-200 mb-4">Transizione da RdC a ADI/SFL (Domande Accolte)</h3>
+                    <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                        <li>Il 2024 vede la sostituzione del Reddito di Cittadinanza con le nuove misure.</li>
+                        <li>Il numero di nuclei beneficiari dell'<strong class="text-sky-400">Assegno di Inclusione (ADI)</strong> (1.737) è superiore a quello dei beneficiari di RdC/PdC dell'anno precedente (942).</li>
+                        <li>Il <strong class="text-teal-400">Supporto per la Formazione e il Lavoro (SFL)</strong> si attesta su numeri più contenuti.</li>
+                    </ul>
+                    <div class="chart-container" style="height: 50vh;"><canvas id="sostegnoRedditoChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Nuclei Beneficiari Assegno Unico</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Il numero di nuclei che beneficiano dell'Assegno Unico è in <strong class="text-green-400">leggera crescita</strong> nel 2024.</li>
+                            <li>La misura raggiunge oltre <strong class="text-slate-100">38.000 famiglie</strong> nella provincia.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="assegnoUnicoChart"></canvas></div>
+                    </div>
+                    <div class="card zoomable">
+                        <h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Genere Domande RdC (2023)</h3>
+                        <ul class="list-disc list-inside text-slate-400 space-y-2 mb-4">
+                            <li>Nel 2023, le domande di RdC/PdC accolte provenivano per il <strong class="text-pink-400">59,4% da donne</strong> e per il <strong class="text-sky-400">40,6% da uomini</strong>.</li>
+                        </ul>
+                        <div class="chart-container"><canvas id="rdcGenderChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartInstances = new Map();
+        const colors = { orange: '#fb923c', sky: '#38bdf8', teal: '#2dd4bf', pink: '#f472b6', red: '#f87171', purple: '#c084fc', green: '#4ade80' };
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        const overlay = document.getElementById('modal-overlay');
+        function unzoom() {
+            document.querySelector('.card.zoomed')?.classList.remove('zoomed');
+            overlay.classList.add('hidden');
+        }
+        document.querySelectorAll('.zoomable').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('canvas, .filter-btn, button')) return;
+                const isZoomed = card.classList.contains('zoomed');
+                unzoom();
+                if (!isZoomed) {
+                    card.classList.add('zoomed');
+                    overlay.classList.remove('hidden');
+                }
+            });
+        });
+        overlay.addEventListener('click', unzoom);
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+        const commonOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
+            }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
+            } 
+        };
+
+        function createChart(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const chart = new Chart(canvas, config);
+            chartInstances.set(canvas, chart);
+            return chart;
+        }
+
+        // --- INVALIDITÀ CIVILE ---
+        createChart('prestazioniVigentiChart', {
+            type: 'bar',
+            data: {
+                labels: ['Indennità di Accompagnamento', 'Pensioni di Invalidità Civile'],
+                datasets: [
+                    { label: 'Femmine', data: [9916, 3155], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [5958, 2501], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+        
+        createChart('liquidazioniTrendChart', {
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024'],
+                datasets: [{
+                    label: 'Totale Prestazioni Liquidate',
+                    data: [3906, 3526, 3596, 3540],
+                    borderColor: colors.teal,
+                    tension: 0.3,
+                    fill: false
+                }]
+            },
+            options: { ...commonOptions, plugins: { legend: { display: false } } }
+        });
+        
+        createChart('tempiDefinizioneChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: 'Tempo Medio 2023 (gg)', data: [142, 118, 144], backgroundColor: 'rgba(192, 132, 252, 0.6)', borderRadius: 5 },
+                    { label: 'Tempo Medio 2024 (gg)', data: [162, 115, 140], backgroundColor: colors.purple, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // --- SOSTEGNO AL REDDITO ---
+        createChart('sostegnoRedditoChart', {
+            type: 'bar',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'RdC/PdC', data: [2299, 942, 0], backgroundColor: colors.orange, borderRadius: 5 },
+                    { label: 'ADI', data: [0, 0, 1737], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'SFL', data: [0, 143, 185], backgroundColor: colors.teal, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+        
+        createChart('assegnoUnicoChart', {
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [{ 
+                    label: 'Nuclei AU a domanda', 
+                    data: [37537, 38226], 
+                    backgroundColor: [colors.green, colors.teal], 
+                    borderRadius: 5 
+                }]
+            },
+            options: { ...commonOptions, plugins: { legend: { display: false } } }
+        });
+
+        createChart('rdcGenderChart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Femmine', 'Maschi'],
+                datasets: [{
+                    data: [560, 382],
+                    backgroundColor: [colors.pink, colors.sky],
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } }, tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}` } } } }
+        });
+    });
+    </script>
+</body>
+</html>
