@@ -54,8 +54,11 @@ def optimize_dashboard():
     # 3. Comprimi file con gzip per server ottimizzati
     files_to_compress = [
         "index.html",
+        "index_2025.html",
         "js/data.js", 
         "js/main.js",
+        "js/data_2025.js",
+        "js/main_2025.js",
         "css/style.css"
     ]
     

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prestazioni Pensionistiche - Pesaro Urbino 2025</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .chart-container { position: relative; height: 40vh; width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn { position: relative; color: #94a3b8; transition: color 0.2s ease-in-out; padding-bottom: 8px; }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active { color: #06b6d4; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: #06b6d4; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+<div class="container mx-auto p-4 md:p-8 section-content active" id="pensioni">
+<header class="mb-8 text-center">
+<div class="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-900/40 rounded-full border border-indigo-700/50">Edizione 2025 - CIV INPS</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-white">Prestazioni Pensionistiche</h1>
+<p class="text-lg text-slate-400 mt-1">Provincia di Pesaro Urbino (RSP 2025)</p>
+</header>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Pensionati Totali 2025</h3>
+<p class="text-4xl font-bold text-white mt-2">99.246</p>
+<p class="text-sm text-slate-500 mt-1">Donne 51,6% (51.249) | Uomini 48,4% (47.997)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Pensioni IVS Vigenti</h3>
+<p class="text-4xl font-bold text-white mt-2">113.214</p>
+<p class="text-sm text-slate-500 mt-1">Trattamenti pensionistici attivi</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Efficienza Liquidazione</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">82,7%</p>
+<p class="text-sm text-slate-500 mt-1">Gest. Privata liquidate &lt; 30gg (vs 76,9% 2024)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Pensioni Liquidate 2025</h3>
+<p class="text-4xl font-bold text-white mt-2">5.751</p>
+<p class="text-sm text-slate-500 mt-1">Nuove decorrenze nell'anno</p>
+</div>
+</div>
+<div class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700" id="tabs">
+<button class="tab-btn active" data-tab="vigenti">Pensioni Vigenti</button>
+<button class="tab-btn" data-tab="liquidate">Pensioni Liquidate</button>
+<button class="tab-btn" data-tab="tempi">Tempi di Liquidazione</button>
+<button class="tab-btn" data-tab="anticipi">Anticipi Pensionistici</button>
+</div>
+<div class="mt-8" id="tab-contents">
+<div class="tab-content active space-y-6" id="vigenti">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Pensionati INPS per Tipologia (2025)</h3>
+<p class="text-slate-400 mb-4">Prevalenza della componente femminile sia nei pensionati previdenziali IVS sia nei beneficiari di prestazioni assistenziali.</p>
+<div class="chart-container"><canvas id="pensionersByTypeChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Trattamenti Vigenti per Gestione (2025)</h3>
+<p class="text-slate-400 mb-4">I lavoratori autonomi (42.080) e il FPLD (40.170) costituiscono oltre il 72% del carico pensionistico totale.</p>
+<div class="chart-container"><canvas id="pensionsByFundChart"></canvas></div>
+</div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Importi Medi Mensili Pensioni IVS per Genere e Gestione (€)</h3>
+<p class="text-slate-400 mb-4">Permane un marcato divario retributivo riflesso sulle pensioni: nel FPLD gli uomini percepiscono mediamente 1.810 € contro 918 € delle donne.</p>
+<div class="chart-container"><canvas id="averageAmountChart"></canvas></div>
+</div>
+</div>
+<div class="tab-content space-y-6" id="liquidate">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Evoluzione Pensioni Liquidate (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Nel 2025 sono state liquidate 5.751 pensioni (3.109 donne e 2.642 uomini).</p>
+<div class="chart-container"><canvas id="liquidatedPensionsTrendChart"></canvas></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Composizione Pensioni Liquidate (2025)</h3>
+<p class="text-slate-400 mb-4">Le pensioni di vecchiaia (29,9%) e di anzianità/anticipata (26,3%) rappresentano la quota maggiore.</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="liquidatedCompositionChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Liquidate per Sistema di Calcolo (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Crescita costante del sistema interamente contributivo (845 pensioni nel 2025), a fronte della flessione del calcolo retributivo.</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="calculationSystemChart"></canvas></div>
+</div>
+</div>
+</div>
+<div class="tab-content space-y-6" id="tempi">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Performance di Liquidazione entro 30 Giorni per Gestione (2025)</h3>
+<p class="text-slate-400 mb-4">Netto miglioramento: la Gestione Privata sale all'<strong class="text-emerald-400">82,7%</strong> di liquidazioni entro un mese (da 76,9% nel 2024), la Pubblica all'<strong class="text-emerald-400">83,7%</strong> e i Fondi Speciali al <strong class="text-emerald-400">94,9%</strong>.</p>
+<div class="chart-container"><canvas id="performanceByFundChart"></canvas></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Distribuzione Tempi - Gestione Privata (2025)</h3>
+<div class="chart-container" style="height: 30vh;"><canvas id="privateTimingDistributionChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Confronto Performance con Benchmark Italia (2025)</h3>
+<div class="chart-container" style="height: 30vh;"><canvas id="benchmarkTimingChart"></canvas></div>
+</div>
+</div>
+</div>
+<div class="tab-content space-y-6" id="anticipi">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Evoluzione Domande Anticipi (Opzione Donna e Quota 103)</h3>
+<p class="text-slate-400 mb-4">Forte contrazione per via dell'inasprimento dei requisiti di legge: Opzione Donna scende a 26 domande accolte e Quota 103 a 39.</p>
+<div class="chart-container"><canvas id="anticipiTrendChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Domande Quota 100/102/103 per Genere</h3>
+<div class="chart-container"><canvas id="quoteGenderChart"></canvas></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script src="../js/data_2025.js"></script><script src="../js/main_2025.js"></script><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const d = new Dashboard();
+            d.currentSection = 'pensioni';
+            d.loadSectionCharts('pensioni');
+        });
+        </script></body>
+</html>

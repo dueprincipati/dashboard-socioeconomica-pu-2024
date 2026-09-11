@@ -12,561 +12,522 @@ class Dashboard {
             success: '#10b981',
             warning: '#f59e0b',
             error: '#ef4444',
-            chart: ['#f97316', '#06b6d4', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#6b7280']
+            orange: '#fb923c',
+            sky: '#38bdf8',
+            teal: '#2dd4bf',
+            pink: '#f472b6',
+            red: '#f87171',
+            purple: '#c084fc',
+            green: '#4ade80',
+            chart: ['#38bdf8', '#4ade80', '#fb923c', '#f472b6', '#c084fc', '#2dd4bf', '#ef4444', '#06b6d4']
         };
         this.init();
     }
 
     init() {
+        this.setupChartDefaults();
         this.setupEventListeners();
+        this.setupInternalTabs();
         this.loadDashboard();
     }
 
+    setupChartDefaults() {
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#94a3b8';
+        }
+    }
+
+    getCommonOptions() {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#cbd5e1' }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        };
+    }
+
     setupEventListeners() {
-        // Tab navigation
+        // Tab navigation (sezioni principali)
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', (e) => {
-                const section = e.target.dataset.section;
-                this.switchSection(section);
+                const section = e.currentTarget.dataset.section;
+                if (section) {
+                    this.switchSection(section);
+                }
             });
         });
 
-        // Card zoom functionality
+        // Funzionalità di zoom sulle card
         document.querySelectorAll('.zoomable').forEach(card => {
             card.addEventListener('click', (e) => {
-                if (e.target.closest('canvas')) return; // Don't zoom when clicking on charts
+                if (e.target.closest('canvas, .filter-btn, button, .tab-btn, a')) return;
                 this.zoomCard(card);
             });
         });
 
-        // Zoom overlay close
-        document.getElementById('zoom-overlay').addEventListener('click', (e) => {
-            if (e.target.id === 'zoom-overlay') {
-                this.closeZoom();
-            }
-        });
+        // Chiusura overlay di zoom al click sullo sfondo
+        const overlay = document.getElementById('zoom-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target.id === 'zoom-overlay') {
+                    this.closeZoom();
+                }
+            });
+        }
 
-        // Escape key to close zoom
+        // Tasto Escape per chiudere lo zoom
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeZoom();
             }
         });
+    }
 
-        // Internal tabs for demografia section
-        document.querySelectorAll('.tab-btn-demo').forEach(button => {
+    setupInternalTabs() {
+        document.querySelectorAll('.tab-btn').forEach(button => {
             button.addEventListener('click', (e) => {
-                const tab = e.target.dataset.demoTab;
-                this.switchDemografiaTab(tab);
-            });
-        });
+                const btn = e.currentTarget;
+                const parentSection = btn.closest('section');
+                if (!parentSection) return;
 
-        // Internal tabs for mercato del lavoro section
-        document.querySelectorAll('.tab-btn-lavoro').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tab = e.target.dataset.lavoroTab;
-                this.switchLavoroTab(tab);
-            });
-        });
+                const sectionTabs = parentSection.querySelectorAll('.tab-btn');
+                const sectionContents = parentSection.querySelectorAll('.tab-content');
+                const targetTabId = btn.dataset.tab;
 
-        // Internal tabs for contenzioso section
-        document.querySelectorAll('.tab-btn-contenzioso').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tab = e.target.dataset.contenziosoTab;
-                this.switchContenziosoTab(tab);
+                sectionTabs.forEach(t => t.classList.remove('active'));
+                sectionContents.forEach(c => c.classList.remove('active'));
+
+                btn.classList.add('active');
+                const targetContent = parentSection.querySelector(`#${targetTabId}`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    this.renderChartsForTab(parentSection.id, targetTabId);
+                }
             });
         });
     }
 
     switchSection(sectionName) {
-        // Update active tab
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        const activeNavBtn = document.querySelector(`[data-section="${sectionName}"]`);
+        if (activeNavBtn) activeNavBtn.classList.add('active');
 
-        // Update active section
         document.querySelectorAll('.section-content').forEach(section => {
             section.classList.remove('active');
         });
-        document.getElementById(sectionName).classList.add('active');
+        const activeSection = document.getElementById(sectionName);
+        if (activeSection) activeSection.classList.add('active');
 
         this.currentSection = sectionName;
         this.loadSectionCharts(sectionName);
+
+        setTimeout(() => {
+            this.resizeSectionCharts(sectionName);
+        }, 60);
     }
 
     zoomCard(card) {
         const overlay = document.getElementById('zoom-overlay');
         const zoomedCard = document.getElementById('zoomed-card');
-        
+        if (!overlay || !zoomedCard) return;
+
         const clonedCard = card.cloneNode(true);
+        clonedCard.classList.remove('zoomable');
         clonedCard.classList.add('zoomed');
-        
+
         zoomedCard.innerHTML = '';
+
+        // Pulsante di chiusura
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'absolute top-3 right-4 text-slate-400 hover:text-white text-3xl font-bold p-1 z-20 transition-colors leading-none';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', 'Chiudi zoom');
+        closeBtn.onclick = () => this.closeZoom();
+        zoomedCard.appendChild(closeBtn);
+
         zoomedCard.appendChild(clonedCard);
-        
         overlay.classList.remove('hidden');
-        
-        // Re-render chart in zoomed view
-        const canvas = clonedCard.querySelector('canvas');
-        if (canvas) {
+
+        // Renderizza nuovamente i grafici nel card ingrandito
+        const canvases = clonedCard.querySelectorAll('canvas');
+        canvases.forEach(canvas => {
             const chartId = canvas.id;
             const originalChart = this.charts[chartId];
-            if (originalChart) {
-                // Create new chart with same configuration
-                const newChart = new Chart(canvas, originalChart.config);
-                // Store reference for cleanup
-                this.zoomedChart = newChart;
+            if (originalChart && originalChart.config) {
+                try {
+                    const clonedConfig = {
+                        type: originalChart.config.type,
+                        data: JSON.parse(JSON.stringify(originalChart.config.data)),
+                        options: {
+                            ...originalChart.config.options,
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    };
+                    new Chart(canvas, clonedConfig);
+                } catch (err) {
+                    console.warn(`Could not render zoomed chart for ${chartId}:`, err);
+                }
             }
-        }
+        });
     }
 
     closeZoom() {
         const overlay = document.getElementById('zoom-overlay');
-        overlay.classList.add('hidden');
-        
-        // Destroy zoomed chart
-        if (this.zoomedChart) {
-            this.zoomedChart.destroy();
-            this.zoomedChart = null;
-        }
-    }
-
-    switchDemografiaTab(tabName) {
-        // Update active tab button
-        document.querySelectorAll('.tab-btn-demo').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-demo-tab="${tabName}"]`).classList.add('active');
-
-        // Update active tab content
-        document.querySelectorAll('.demo-tab-content').forEach(content => {
-            content.classList.remove('active');
-            content.classList.add('hidden');
-        });
-        
-        const activeTab = document.getElementById(`demo-${tabName}`);
-        if (activeTab) {
-            activeTab.classList.add('active');
-            activeTab.classList.remove('hidden');
-        }
-    }
-
-    switchLavoroTab(tabName) {
-        // Update active tab button
-        document.querySelectorAll('.tab-btn-lavoro').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-lavoro-tab="${tabName}"]`).classList.add('active');
-
-        // Update active tab content
-        document.querySelectorAll('.lavoro-tab-content').forEach(content => {
-            content.classList.remove('active');
-            content.classList.add('hidden');
-        });
-        
-        const activeTab = document.getElementById(`lavoro-${tabName}`);
-        if (activeTab) {
-            activeTab.classList.add('active');
-            activeTab.classList.remove('hidden');
-        }
-    }
-
-    switchContenziosoTab(tabName) {
-        // Update active tab button
-        document.querySelectorAll('.tab-btn-contenzioso').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-contenzioso-tab="${tabName}"]`).classList.add('active');
-
-        // Update active tab content
-        document.querySelectorAll('.contenzioso-tab-content').forEach(content => {
-            content.classList.remove('active');
-            content.classList.add('hidden');
-        });
-        
-        const activeTab = document.getElementById(`contenzioso-${tabName}`);
-        if (activeTab) {
-            activeTab.classList.add('active');
-            activeTab.classList.remove('hidden');
-        }
+        if (overlay) overlay.classList.add('hidden');
+        const zoomedCard = document.getElementById('zoomed-card');
+        if (zoomedCard) zoomedCard.innerHTML = '';
     }
 
     async loadDashboard() {
         try {
-            // Hide loading, show content
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('content').classList.remove('hidden');
+            const loading = document.getElementById('loading');
+            if (loading) loading.classList.add('hidden');
+            const content = document.getElementById('content');
+            if (content) content.classList.remove('hidden');
 
-            // Load initial section
-            this.loadSectionCharts(this.currentSection);
             this.updateKPIs();
-
+            this.loadSectionCharts(this.currentSection);
         } catch (error) {
             console.error('Error loading dashboard:', error);
         }
     }
 
     updateKPIs() {
+        if (typeof dashboardData === 'undefined' || !dashboardData.kpi) return;
         const kpis = dashboardData.kpi;
-        
-        document.getElementById('kpi-popolazione').textContent = kpis.popolazione_totale.toLocaleString('it-IT');
-        document.getElementById('kpi-occupazione').textContent = kpis.tasso_occupazione + '%';
-        document.getElementById('kpi-pensionati').textContent = kpis.pensionati_totale.toLocaleString('it-IT');
-        document.getElementById('kpi-entrate').textContent = kpis.crescita_entrate;
+        const popEl = document.getElementById('kpi-popolazione');
+        if (popEl && kpis.popolazione_totale) popEl.textContent = kpis.popolazione_totale.toLocaleString('it-IT');
+        const occEl = document.getElementById('kpi-occupazione');
+        if (occEl && kpis.tasso_occupazione) occEl.textContent = kpis.tasso_occupazione + '%';
+        const penEl = document.getElementById('kpi-pensionati');
+        if (penEl && kpis.pensionati_totale) penEl.textContent = kpis.pensionati_totale.toLocaleString('it-IT');
+        const entEl = document.getElementById('kpi-entrate');
+        if (entEl && kpis.crescita_entrate) entEl.textContent = kpis.crescita_entrate;
     }
 
     loadSectionCharts(sectionName) {
-        switch (sectionName) {
-            case 'demografia':
-                this.loadDemografiaCharts();
-                break;
-            case 'mercato_lavoro':
-                this.loadMercatoLavoroCharts();
-                break;
-            case 'entrate_vigilanza':
-                this.loadEntrateVigilanzaCharts();
-                break;
-            case 'ammortizzatori':
-                this.loadAmmortizzatoriCharts();
-                break;
-            case 'pensioni':
-                this.loadPensioniCharts();
-                break;
-            case 'assistenza':
-                this.loadAssistenzaCharts();
-                break;
-            case 'relazioni_utenza':
-                this.loadRelazioniUtenzaCharts();
-                break;
-            case 'organizzazione':
-                this.loadOrganizzazioneCharts();
-                break;
-            case 'contenzioso':
-                this.loadContenziosoCharts();
-                break;
-            case 'patrimonio':
-                this.loadPatrimonioCharts();
-                break;
+        const section = document.getElementById(sectionName);
+        if (!section) return;
+
+        const activeInternalTab = section.querySelector('.tab-content.active');
+        if (activeInternalTab) {
+            this.renderChartsForTab(sectionName, activeInternalTab.id);
+        } else {
+            switch (sectionName) {
+                case 'entrate_vigilanza':
+                    this.loadEntrateVigilanzaCharts();
+                    break;
+                case 'relazioni_utenza':
+                    this.loadRelazioniUtenzaCharts();
+                    break;
+                case 'organizzazione':
+                    this.loadOrganizzazioneCharts();
+                    break;
+                case 'patrimonio':
+                    this.loadPatrimonioCharts();
+                    break;
+            }
         }
     }
 
-    loadDemografiaCharts() {
-        // Popolazione per genere e età
-        const popolazioneData = dashboardData.demografia.popolazione;
-        this.createChart('chart-popolazione', {
+    renderChartsForTab(sectionId, tabId) {
+        switch (sectionId) {
+            case 'demografia':
+                this.loadDemografiaCharts(tabId);
+                break;
+            case 'mercato_lavoro':
+                this.loadMercatoLavoroCharts(tabId);
+                break;
+            case 'ammortizzatori':
+                this.loadAmmortizzatoriCharts(tabId);
+                break;
+            case 'pensioni':
+                this.loadPensioniCharts(tabId);
+                break;
+            case 'assistenza':
+                this.loadAssistenzaCharts(tabId);
+                break;
+            case 'contenzioso':
+                this.loadContenziosoCharts(tabId);
+                break;
+        }
+        setTimeout(() => this.resizeTabCharts(tabId), 30);
+    }
+
+    resizeTabCharts(tabId) {
+        const tabEl = document.getElementById(tabId);
+        if (!tabEl) return;
+        tabEl.querySelectorAll('canvas').forEach(canvas => {
+            const chart = this.charts[canvas.id];
+            if (chart) chart.resize();
+        });
+    }
+
+    resizeSectionCharts(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+        section.querySelectorAll('canvas').forEach(canvas => {
+            const chart = this.charts[canvas.id];
+            if (chart) chart.resize();
+        });
+    }
+
+    // ==========================================
+    // 1. DEMOGRAFIA
+    // ==========================================
+    loadDemografiaCharts(tabId = 'struttura') {
+        if (tabId === 'struttura') {
+            this.renderDemografiaStruttura();
+        } else if (tabId === 'dinamica') {
+            this.renderDemografiaDinamica();
+        }
+    }
+
+    renderDemografiaStruttura() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
+        this.createChart('agePyramidChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: '0-14 anni', data: [11.8, 11.6, 12.2], backgroundColor: colors.teal, borderRadius: 5 },
+                    { label: '15-64 anni', data: [63.0, 62.2, 63.5], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: '65 e oltre', data: [25.3, 26.2, 24.4], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        this.createChart('genderDistributionChart', {
             type: 'doughnut',
             data: {
                 labels: ['Femmine', 'Maschi'],
                 datasets: [{
-                    data: [popolazioneData.femmine, popolazioneData.maschi],
-                    backgroundColor: [this.colors.accent, this.colors.secondary],
-                    borderWidth: 0
+                    data: [50.8, 49.2],
+                    backgroundColor: [colors.pink, colors.sky],
+                    borderColor: '#1e293b'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0' }
-                    }
+                    legend: { position: 'bottom', labels: { color: '#cbd5e1' } },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } }
                 }
             }
         });
 
-        // Saldo naturale
-        const saldoData = dashboardData.demografia.saldo_naturale.serie_storica;
-        this.createChart('chart-saldo-naturale', {
-            type: 'line',
-            data: {
-                labels: saldoData.map(d => d.anno),
-                datasets: [{
-                    label: 'Saldo Naturale',
-                    data: saldoData.map(d => d.saldo),
-                    borderColor: this.colors.error,
-                    backgroundColor: this.colors.error + '20',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
-
-        // Longevità
-        const longevitaData = dashboardData.demografia.longevita.data;
-        this.createChart('chart-longevita', {
+        this.createChart('lifeExpectancyChart', {
             type: 'bar',
             data: {
-                labels: ['2013', '2023'],
-                datasets: [{
-                    label: 'Femmine',
-                    data: [longevitaData[2013].alla_nascita.femmine, longevitaData[2023].alla_nascita.femmine],
-                    backgroundColor: this.colors.accent
-                }, {
-                    label: 'Maschi',
-                    data: [longevitaData[2013].alla_nascita.maschi, longevitaData[2023].alla_nascita.maschi],
-                    backgroundColor: this.colors.secondary
-                }]
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                datasets: [
+                    { label: 'Femmine', data: [86.1, 85.9, 85.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [82.2, 81.9, 81.0], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                ...commonOptions,
                 scales: {
-                    y: {
-                        beginAtZero: false,
-                        min: 75,
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
-
-        // Flussi migratori
-        const flussiData = dashboardData.demografia.flussi_migratori.saldo_demografico.serie_storica;
-        this.createChart('chart-flussi-migratori', {
-            type: 'line',
-            data: {
-                labels: flussiData.map(d => d.anno),
-                datasets: [{
-                    label: 'Saldo Migratorio',
-                    data: flussiData.map(d => d.saldo_migratorio),
-                    borderColor: this.colors.success,
-                    backgroundColor: this.colors.success + '20',
-                    tension: 0.4
-                }, {
-                    label: 'Saldo Naturale',
-                    data: flussiData.map(d => d.saldo_naturale),
-                    borderColor: this.colors.error,
-                    backgroundColor: this.colors.error + '20',
-                    tension: 0.4
-                }, {
-                    label: 'Saldo Demografico',
-                    data: flussiData.map(d => d.saldo_demografico),
-                    borderColor: this.colors.primary,
-                    backgroundColor: this.colors.primary + '20',
-                    tension: 0.4,
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
+                    ...commonOptions.scales,
+                    y: { ...commonOptions.scales.y, beginAtZero: false, suggestedMin: 80 }
                 }
             }
         });
     }
 
-    loadMercatoLavoroCharts() {
-        // Lavoratori per categoria
-        const lavoratoriData = dashboardData.mercato_lavoro.lavoratori;
-        this.createChart('chart-lavoratori-categoria', {
-            type: 'pie',
+    renderDemografiaDinamica() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+        const years = ['2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023'];
+
+        this.createChart('naturalBalanceChart', {
+            type: 'bar',
             data: {
-                labels: ['Dipendenti', 'Artigiani', 'Commercianti', 'Agricoli Autonomi', 'Gestione Separata'],
-                datasets: [{
-                    data: [
-                        lavoratoriData.dipendenti.totale,
-                        lavoratoriData.autonomi.artigiani,
-                        lavoratoriData.autonomi.commercianti,
-                        lavoratoriData.autonomi.agricoli,
-                        lavoratoriData.gestione_separata
-                    ],
-                    backgroundColor: this.colors.chart.slice(0, 5),
-                    borderWidth: 0
-                }]
+                labels: years,
+                datasets: [
+                    { type: 'line', label: 'Saldo Naturale', data: [-717, -728, -1137, -1089, -1370, -1414, -1666, -2755, -2018, -2270, -1883], borderColor: colors.purple, tension: 0.3, yAxisID: 'y1' },
+                    { label: 'Nascite', data: [3076, 2931, 2840, 2717, 2528, 2378, 2268, 2161, 2182, 2122, 2036], backgroundColor: colors.green, borderRadius: 5, yAxisID: 'y' },
+                    { label: 'Decessi', data: [3793, 3659, 3977, 3806, 3898, 3792, 3934, 4916, 4200, 4392, 3919], backgroundColor: colors.red, borderRadius: 5, yAxisID: 'y' }
+                ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0', fontSize: 10 }
-                    }
+                ...commonOptions,
+                scales: {
+                    y: { position: 'left', title: { display: true, text: 'Nascite / Decessi' } },
+                    y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Saldo' } }
                 }
             }
         });
 
-        // Tasso di occupazione per fascia d'età
-        const occupazioneData = dashboardData.mercato_lavoro.indicatori_occupazione.tasso_occupazione;
-        this.createChart('chart-tasso-occupazione', {
-            type: 'bar',
+        this.createChart('migrationFlowChart', {
+            type: 'line',
             data: {
-                labels: ['15-24', '25-34', '35-49', '50-64'],
-                datasets: [{
-                    label: 'Femmine',
-                    data: [
-                        occupazioneData.femmine['15-24'],
-                        occupazioneData.femmine['25-34'],
-                        occupazioneData.femmine['35-49'],
-                        occupazioneData.femmine['50-64']
-                    ],
-                    backgroundColor: this.colors.accent
-                }, {
-                    label: 'Maschi',
-                    data: [
-                        occupazioneData.maschi['15-24'],
-                        occupazioneData.maschi['25-34'],
-                        occupazioneData.maschi['35-49'],
-                        occupazioneData.maschi['50-64']
-                    ],
-                    backgroundColor: this.colors.secondary
-                }]
+                labels: years,
+                datasets: [
+                    { label: 'Immigrati', data: [1888, 1774, 1437, 1629, 1700, 1894, 1843, 1618, 1630, 1626, 1758], borderColor: colors.green, tension: 0.3 },
+                    { label: 'Emigrati', data: [508, 538, 635, 702, 683, 790, 665, 748, 564, 642, 653], borderColor: colors.orange, tension: 0.3 }
+                ]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: { 
-                            color: '#e2e8f0',
-                            callback: function(value) { return value + '%'; }
-                        },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
+            options: commonOptions
         });
 
-        // Assunzioni vs Cessazioni
-        const assunzioniData = dashboardData.mercato_lavoro.assunzioni.confronto;
-        const cessazioniData = dashboardData.mercato_lavoro.cessazioni.confronto;
-        this.createChart('chart-assunzioni-cessazioni', {
+        this.createChart('demographicBalanceChart', {
             type: 'bar',
             data: {
-                labels: ['2023', '2024'],
-                datasets: [{
-                    label: 'Assunzioni',
-                    data: [assunzioniData[2023].totale, assunzioniData[2024].totale],
-                    backgroundColor: this.colors.success
-                }, {
-                    label: 'Cessazioni',
-                    data: [cessazioniData[2023].totale, cessazioniData[2024].totale],
-                    backgroundColor: this.colors.error
-                }]
+                labels: years,
+                datasets: [
+                    { label: 'Saldo Naturale', data: [-717, -728, -1137, -1089, -1370, -1414, -1666, -2755, -2018, -2270, -1883], backgroundColor: colors.red, borderRadius: 5 },
+                    { label: 'Saldo Migratorio', data: [1380, 1236, 802, 927, 1017, 1104, 1178, 870, 1066, 984, 1105], backgroundColor: colors.green, borderRadius: 5 },
+                    { type: 'line', label: 'Saldo Demografico Totale', data: [663, 508, -335, -162, -353, -310, -488, -1885, -952, -1286, -778], borderColor: colors.purple, tension: 0.3, pointBackgroundColor: colors.purple, pointRadius: 4 }
+                ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                ...commonOptions,
+                interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
+                    x: { ...commonOptions.scales.x },
+                    y: { ...commonOptions.scales.y, stacked: true }
                 },
                 plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
-
-        // Retribuzioni per settore
-        const retribuzioniData = dashboardData.mercato_lavoro.retribuzioni.settore_privato;
-        const settori = ['manifatturiero', 'costruzioni', 'commercio', 'turismo_ristorazione', 'attivita_finanziarie'];
-        const settoriLabels = ['Manifatturiero', 'Costruzioni', 'Commercio', 'Turismo/Ristorazione', 'Attività Finanziarie'];
-        
-        this.createChart('chart-retribuzioni', {
-            type: 'bar',
-            data: {
-                labels: settoriLabels,
-                datasets: [{
-                    label: 'Femmine',
-                    data: settori.map(s => retribuzioniData[s].femmine),
-                    backgroundColor: this.colors.accent
-                }, {
-                    label: 'Maschi',
-                    data: settori.map(s => retribuzioniData[s].maschi),
-                    backgroundColor: this.colors.secondary
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        ticks: { 
-                            color: '#e2e8f0',
-                            callback: function(value) { return '€' + value; }
-                        },
-                        grid: { color: '#334155' }
-                    },
-                    y: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
+                    ...commonOptions.plugins,
+                    tooltip: { position: 'nearest' }
                 }
             }
         });
     }
+
+    // ==========================================
+    // 2. MERCATO DEL LAVORO
+    // ==========================================
+    loadMercatoLavoroCharts(tabId = 'occupazione') {
+        if (tabId === 'occupazione') {
+            this.renderMercatoLavoroOccupazione();
+        } else if (tabId === 'flussi') {
+            this.renderMercatoLavoroFlussi();
+        }
+    }
+
+    renderMercatoLavoroOccupazione() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
+        this.createChart('mainIndicatorsChart', {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023', '2024'],
+                datasets: [
+                    { label: 'Tasso Occupazione PU', data: [69.6, 69.2, 70.1], borderColor: colors.green, tension: 0.3, borderWidth: 3 },
+                    { label: 'Tasso Disoccupazione PU', data: [4.9, 5.2, 3.7], borderColor: colors.orange, tension: 0.3, borderWidth: 3 },
+                    { label: 'Tasso Occupazione Italia', data: [60.1, 61.5, 62.2], borderColor: colors.green, tension: 0.3, borderDash: [5, 5], borderWidth: 1.5 },
+                    { label: 'Tasso Disoccupazione Italia', data: [8.1, 7.7, 6.5], borderColor: colors.orange, tension: 0.3, borderDash: [5, 5], borderWidth: 1.5 }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } }
+                }
+            }
+        });
+
+        this.createChart('workersCompositionChart', {
+            type: 'bar',
+            data: {
+                labels: ['Dipendenti', 'Commercianti', 'Artigiani', 'Gest. Separata', 'Domestici', 'Agricoli Autonomi'],
+                datasets: [{
+                    label: 'Numero Lavoratori (2023)',
+                    data: [138925, 12217, 11987, 7149, 4868, 2744],
+                    backgroundColor: [colors.sky, colors.teal, colors.purple, colors.pink, colors.orange, colors.green],
+                    borderRadius: 5
+                }]
+            },
+            options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+
+        this.createChart('genderPayGapChart', {
+            type: 'bar',
+            data: {
+                labels: ['Manifatturiero', 'Commercio', 'Alloggio/Ristorazione', 'Sanità', 'Costruzioni'],
+                datasets: [
+                    { label: 'Femmine', data: [78.1, 67.9, 51.3, 58.4, 68.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [102.6, 89.0, 60.6, 74.6, 90.5], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+    }
+
+    renderMercatoLavoroFlussi() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
+        this.createChart('hiresByContractChart', {
+            type: 'bar',
+            data: {
+                labels: ['T. Indeterminato', 'T. Determinato', 'Stagionale', 'Somministrazione', 'Intermittente'],
+                datasets: [
+                    { label: 'Assunzioni 2023', data: [8613, 19258, 7251, 5716, 11106], backgroundColor: 'rgba(56, 189, 248, 0.6)', borderRadius: 5 },
+                    { label: 'Assunzioni 2024', data: [7727, 18388, 7595, 5043, 12153], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        this.createChart('hiresTerminationsBalanceChart', {
+            type: 'bar',
+            data: {
+                labels: ['T. Indeterminato', 'T. Determinato', 'Stagionale', 'Somministrazione', 'Intermittente'],
+                datasets: [
+                    { label: 'Assunzioni 2024', data: [7727, 18388, 7595, 5043, 12153], backgroundColor: colors.green, borderRadius: 5 },
+                    { label: 'Cessazioni 2024', data: [11130, 14409, 7561, 5114, 11840], backgroundColor: colors.red, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
+        this.createChart('partTimeIncidenceChart', {
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Marche', 'Italia'],
+                datasets: [
+                    { label: 'Donne', data: [48.1, 45.6, 44.1], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Uomini', data: [11.5, 12.9, 15.4], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw}%` } }
+                }
+            }
+        });
+    }
+
 
     loadEntrateVigilanzaCharts() {
         // Entrate contributive
@@ -714,183 +675,119 @@ class Dashboard {
         });
     }
 
-    loadAmmortizzatoriCharts() {
-        // Setup tabs functionality
-        this.setupAmmortizzatoriTabs();
 
-        // Chart colors
-        const colors = {
-            pink: '#ec4899',
-            sky: '#06b6d4',
-            purple: '#8b5cf6',
-            teal: '#14b8a6',
-            orange: '#f97316',
-            green: '#10b981',
-            red: '#ef4444'
-        };
+    // ==========================================
+    // 4. AMMORTIZZATORI SOCIALI
+    // ==========================================
+    loadAmmortizzatoriCharts(tabId = 'cessazione') {
+        if (tabId === 'cessazione') {
+            this.renderAmmortizzatoriCessazione();
+        } else if (tabId === 'sospensione') {
+            this.renderAmmortizzatoriSospensione();
+        }
+    }
 
-        const commonOptions = { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
-            }, 
-            scales: { 
-                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
-                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
-            } 
-        };
-
+    renderAmmortizzatoriCessazione() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
         const years = ['2022', '2023', '2024'];
-        
-        // --- CESSAZIONE RAPPORTO ---
+
         this.createChart('naspiGenderChart', {
-            type: 'bar', 
-            data: { 
-                labels: years, 
-                datasets: [ 
-                    { label: 'Femmine', data: [8934, 8900, 9379], backgroundColor: colors.pink, borderRadius: 5 }, 
-                    { label: 'Maschi', data: [5806, 6367, 7016], backgroundColor: colors.sky, borderRadius: 5 } 
-                ] 
-            }, 
-            options: commonOptions 
-        });
-        
-        this.createChart('benefitsTypeChart', {
-            type: 'bar', 
-            data: { 
-                labels: ['2023', '2024'], 
-                datasets: [ 
-                    { label: 'NASpI', data: [19543, 20464], backgroundColor: colors.purple, borderRadius: 5 }, 
-                    { label: 'Disoccupazione Agricola', data: [937, 902], backgroundColor: colors.teal, borderRadius: 5 }, 
-                    { label: 'Dis-coll', data: [110, 126], backgroundColor: colors.orange, borderRadius: 5 } 
-                ] 
-            }, 
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    { label: 'Femmine', data: [8934, 8900, 9379], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Maschi', data: [5806, 6367, 7016], backgroundColor: colors.sky, borderRadius: 5 }
+                ]
+            },
             options: commonOptions
         });
-        
+
+        this.createChart('benefitsTypeChart', {
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [
+                    { label: 'NASpI', data: [19543, 20464], backgroundColor: colors.purple, borderRadius: 5 },
+                    { label: 'Disoccupazione Agricola', data: [937, 902], backgroundColor: colors.teal, borderRadius: 5 },
+                    { label: 'Dis-coll', data: [110, 126], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+
         this.createChart('naspiTimingChart', {
-            type: 'doughnut', 
-            data: { 
-                labels: ['Entro 15 gg', 'Oltre 15 gg'], 
+            type: 'doughnut',
+            data: {
+                labels: ['Entro 15 gg', 'Oltre 15 gg'],
                 datasets: [{
-                    data: [88.5, 11.5], 
-                    backgroundColor: [colors.green, colors.red], 
-                    borderColor: '#1e293b' 
-                }] 
-            }, 
+                    data: [88.5, 11.5],
+                    backgroundColor: [colors.green, colors.red],
+                    borderColor: '#1e293b'
+                }]
+            },
             options: {
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { 
-                    legend: { position: 'bottom', labels: { color: '#cbd5e1' }}, 
-                    tooltip: {callbacks: {label: (c) => `${c.label}: ${c.raw}%`}}
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#cbd5e1' } },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}%` } }
                 }
             }
         });
+    }
 
-        // --- SOSPENSIONE RAPPORTO ---
+    renderAmmortizzatoriSospensione() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
         this.createChart('cigHoursChart', {
-            type: 'line', 
-            data: { 
-                labels: ['2021', '2022', '2023', '2024'], 
-                datasets: [ 
-                    { label: 'CIGO', data: [1233742, 365795, 720750, 681287], borderColor: colors.sky, tension: 0.3 }, 
-                    { label: 'CIGS', data: [115336, 126111, 97009, 437841], borderColor: colors.pink, tension: 0.3 }, 
-                    { label: 'Fondi Solidarietà', data: [1014495, 90184, 17793, 4034], borderColor: colors.green, tension: 0.3 } 
-                ] 
-            }, 
-            options: commonOptions 
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024'],
+                datasets: [
+                    { label: 'CIGO', data: [1233742, 365795, 720750, 681287], borderColor: colors.sky, tension: 0.3 },
+                    { label: 'CIGS', data: [115336, 126111, 97009, 437841], borderColor: colors.pink, tension: 0.3 },
+                    { label: 'Fondi Solidarietà', data: [1014495, 90184, 17793, 4034], borderColor: colors.green, tension: 0.3 }
+                ]
+            },
+            options: commonOptions
         });
-        
+
         this.createChart('cigBeneficiariesChart', {
-            type: 'bar', 
-            data: { 
-                labels: ['2023', '2024'], 
-                datasets: [ 
-                    { label: 'CIGO', data: [7694, 7293], backgroundColor: colors.sky, borderRadius: 5 }, 
-                    { label: 'CIGS', data: [1025, 1987], backgroundColor: colors.pink, borderRadius: 5 }, 
-                    { label: 'Fondi Solidarietà', data: [130, 72], backgroundColor: colors.green, borderRadius: 5 } 
-                ] 
-            }, 
-            options: commonOptions 
+            type: 'bar',
+            data: {
+                labels: ['2023', '2024'],
+                datasets: [
+                    { label: 'CIGO', data: [7694, 7293], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'CIGS', data: [1025, 1987], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Fondi Solidarietà', data: [130, 72], backgroundColor: colors.green, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
         });
 
         this.createChart('erogationTimingChart', {
-            type: 'bar', 
-            data: { 
-                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'], 
+            type: 'bar',
+            data: {
+                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
                 datasets: [
-                    { label: 'CIGO (gg)', data: [11, 12, 21], backgroundColor: colors.purple, borderRadius: 5 }, 
+                    { label: 'CIGO (gg)', data: [11, 12, 21], backgroundColor: colors.purple, borderRadius: 5 },
                     { label: 'FIS (gg)', data: [52, 41, 78], backgroundColor: colors.teal, borderRadius: 5 }
-                ] 
-            }, 
-            options: commonOptions 
+                ]
+            },
+            options: commonOptions
         });
     }
 
-    setupAmmortizzatoriTabs() {
-        const tabs = document.querySelectorAll('#ammortizzatori .tab-btn');
-        const contents = document.querySelectorAll('#ammortizzatori .tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                contents.forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(tab.dataset.tab).classList.add('active');
-            });
-        });
+    // ==========================================
+    // 5. PENSIONI
+    // ==========================================
+    loadPensioniCharts(tabId = 'vigenti') {
+        this.renderPensioniChartsForTab(tabId);
     }
 
-    loadPensioniCharts() {
-        // Setup tabs functionality
-        this.setupPensioniTabs();
-
-        // Chart colors
-        const colors = {
-            orange: '#fb923c',
-            sky: '#38bdf8',
-            teal: '#2dd4bf',
-            pink: '#f472b6',
-            red: '#f87171',
-            purple: '#c084fc',
-            green: '#4ade80'
-        };
-
-        const commonOptions = { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
-            }, 
-            scales: { 
-                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
-                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
-            } 
-        };
-
-        // Render all charts for pensioni
-        this.renderPensioniChartsForTab('vigenti');
-    }
-
-    setupPensioniTabs() {
-        const tabs = document.querySelectorAll('#pensioni .tab-btn');
-        const contents = document.querySelectorAll('#pensioni .tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                contents.forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                const activeContent = document.getElementById(tab.dataset.tab);
-                activeContent.classList.add('active');
-                
-                // Render charts only when tab is activated
-                this.renderPensioniChartsForTab(activeContent.id);
-            });
-        });
-    }
 
     renderPensioniChartsForTab(tabId) {
         const colors = {
@@ -1100,34 +997,22 @@ class Dashboard {
         }
     }
 
-    loadAssistenzaCharts() {
-        // Setup tabs functionality
-        this.setupAssistenzaTabs();
 
-        // Chart colors
-        const colors = {
-            orange: '#fb923c',
-            sky: '#38bdf8',
-            teal: '#2dd4bf',
-            pink: '#f472b6',
-            red: '#f87171',
-            purple: '#c084fc',
-            green: '#4ade80'
-        };
+    // ==========================================
+    // 6. PRESTAZIONI ASSISTENZIALI
+    // ==========================================
+    loadAssistenzaCharts(tabId = 'invalidita') {
+        if (tabId === 'invalidita') {
+            this.renderAssistenzaInvalidita();
+        } else if (tabId === 'sostegno') {
+            this.renderAssistenzaSostegno();
+        }
+    }
 
-        const commonOptions = { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-                legend: { position: 'bottom', labels: { color: '#cbd5e1' } } 
-            }, 
-            scales: { 
-                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }, 
-                x: { grid: { display: false }, ticks: { color: '#94a3b8' } } 
-            } 
-        };
+    renderAssistenzaInvalidita() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
 
-        // --- INVALIDITÀ CIVILE ---
         this.createChart('prestazioniVigentiChart', {
             type: 'bar',
             data: {
@@ -1139,7 +1024,7 @@ class Dashboard {
             },
             options: commonOptions
         });
-        
+
         this.createChart('liquidazioniTrendChart', {
             type: 'line',
             data: {
@@ -1154,20 +1039,24 @@ class Dashboard {
             },
             options: { ...commonOptions, plugins: { legend: { display: false } } }
         });
-        
+
         this.createChart('tempiDefinizioneChart', {
             type: 'bar',
             data: {
-                labels: ['Pesaro e Urbino', 'Regione Marche', 'Italia'],
+                labels: ['Pesaro e Urbino 2023', 'Pesaro e Urbino 2024', 'Regione Marche 2024', 'Italia 2024'],
                 datasets: [
-                    { label: 'Tempo Medio 2023 (gg)', data: [142, 118, 144], backgroundColor: 'rgba(192, 132, 252, 0.6)', borderRadius: 5 },
-                    { label: 'Tempo Medio 2024 (gg)', data: [162, 115, 140], backgroundColor: colors.purple, borderRadius: 5 }
+                    { label: 'Fase Sanitaria (gg)', data: [123, 142, 97, 125], backgroundColor: colors.sky, borderRadius: 5 },
+                    { label: 'Fase Amministrativa (gg)', data: [19, 20, 18, 16], backgroundColor: colors.orange, borderRadius: 5 }
                 ]
             },
-            options: commonOptions
+            options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
         });
+    }
 
-        // --- SOSTEGNO AL REDDITO ---
+    renderAssistenzaSostegno() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
         this.createChart('sostegnoRedditoChart', {
             type: 'bar',
             data: {
@@ -1180,16 +1069,16 @@ class Dashboard {
             },
             options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
         });
-        
+
         this.createChart('assegnoUnicoChart', {
             type: 'bar',
             data: {
                 labels: ['2023', '2024'],
-                datasets: [{ 
-                    label: 'Nuclei AU a domanda', 
-                    data: [37537, 38226], 
-                    backgroundColor: [colors.green, colors.teal], 
-                    borderRadius: 5 
+                datasets: [{
+                    label: 'Nuclei AU a domanda',
+                    data: [37537, 38226],
+                    backgroundColor: [colors.green, colors.teal],
+                    borderRadius: 5
                 }]
             },
             options: { ...commonOptions, plugins: { legend: { display: false } } }
@@ -1205,23 +1094,17 @@ class Dashboard {
                     borderColor: '#1e293b'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } }, tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}` } } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#cbd5e1' } },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.raw}` } }
+                }
+            }
         });
     }
 
-    setupAssistenzaTabs() {
-        const tabs = document.querySelectorAll('#assistenza .tab-btn');
-        const contents = document.querySelectorAll('#assistenza .tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                contents.forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(tab.dataset.tab).classList.add('active');
-            });
-        });
-    }
 
     loadRelazioniUtenzaCharts() {
         // Canali di accesso
@@ -1473,94 +1356,81 @@ class Dashboard {
         });
     }
 
-    loadContenziosoCharts() {
-        // Contenzioso amministrativo
-        this.createChart('chart-contenzioso-amm', {
-            type: 'doughnut',
-            data: {
-                labels: ['Ricorsi Pervenuti 2024', 'Ricorsi Pervenuti 2023'],
-                datasets: [{
-                    data: [514, 458],
-                    backgroundColor: [this.colors.primary, this.colors.secondary],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
 
-        // Contenzioso giudiziario per materia (esempio con dati principali)
-        this.createChart('chart-contenzioso-giud', {
+    // ==========================================
+    // 9. CONTENZIOSO
+    // ==========================================
+    loadContenziosoCharts(tabId = 'amministrativo') {
+        if (tabId === 'amministrativo') {
+            this.renderContenziosoAmministrativo();
+        } else if (tabId === 'giudiziario') {
+            this.renderContenziosoGiudiziario();
+        }
+    }
+
+    renderContenziosoAmministrativo() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
+        this.createChart('adminAppealsFlowChart', {
             type: 'bar',
             data: {
-                labels: ['Contributivo', 'Pensionistico', 'Invalidità Civile'],
+                labels: ['Da Lavorare (Inizio Anno)', 'Pervenuti', 'Definiti', 'Da Lavorare (Fine Anno)'],
                 datasets: [{
-                    label: 'Favorevole INPS (%)',
-                    data: [52.4, 61.5, 64.5],
-                    backgroundColor: this.colors.success
-                }, {
-                    label: 'Favorevole Utenti (%)',
-                    data: [16.7, 26.9, 35.5],
-                    backgroundColor: this.colors.error
+                    label: 'Numero Ricorsi',
+                    data: [25, 514, 500, 40],
+                    backgroundColor: [colors.orange, colors.sky, colors.green, colors.red],
+                    borderRadius: 5
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: { 
-                            color: '#e2e8f0',
-                            callback: function(value) { return value + '%'; }
-                        },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#e2e8f0' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
-        });
-
-        // ATP Invalidità Civile
-        this.createChart('chart-atp-invalidita', {
-            type: 'doughnut',
-            data: {
-                labels: ['Favorevole INPS', 'Favorevole Utenti', 'Altri Esiti'],
-                datasets: [{
-                    data: [33.2, 58.2, 8.6],
-                    backgroundColor: [this.colors.success, this.colors.error, this.colors.warning],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0' }
-                    }
-                }
-            }
+            options: { ...commonOptions, plugins: { legend: { display: false } } }
         });
     }
+
+    renderContenziosoGiudiziario() {
+        const colors = this.colors;
+        const commonOptions = this.getCommonOptions();
+
+        this.createChart('judicialOutcomesChart', {
+            type: 'bar',
+            data: {
+                labels: ['Contenzioso Ordinario', 'ATP Invalidità Civile'],
+                datasets: [
+                    { label: 'Favorevole INPS', data: [67, 210], backgroundColor: colors.green, borderRadius: 5 },
+                    { label: 'Favorevole Utenti', data: [38, 344], backgroundColor: colors.pink, borderRadius: 5 },
+                    { label: 'Altri Esiti', data: [19, 49], backgroundColor: colors.orange, borderRadius: 5 }
+                ]
+            },
+            options: { ...commonOptions, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+
+        this.createChart('judicialCasesBySubjectChart', {
+            type: 'bar',
+            data: {
+                labels: ['Contributivo', 'Inv. Civile', 'Pensioni', 'Indebiti', 'Altri'],
+                datasets: [{
+                    label: 'Giudizi Iniziati',
+                    data: [71, 41, 25, 19, 14],
+                    backgroundColor: [colors.sky, colors.teal, colors.purple, colors.pink, colors.orange],
+                    borderRadius: 5
+                }]
+            },
+            options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+
+        this.createChart('pendingCasesChart', {
+            type: 'bar',
+            data: {
+                labels: ['Contenzioso Ordinario', 'Contenzioso ATP'],
+                datasets: [
+                    { label: 'Pendenza Inizio 2024', data: [160, 403], backgroundColor: 'rgba(248, 113, 113, 0.6)', borderRadius: 5 },
+                    { label: 'Pendenza Fine 2024', data: [206, 398], backgroundColor: colors.red, borderRadius: 5 }
+                ]
+            },
+            options: commonOptions
+        });
+    }
+
 
     loadPatrimonioCharts() {
         // Valore patrimonio
@@ -1605,17 +1475,26 @@ class Dashboard {
         });
     }
 
+
     createChart(canvasId, config) {
-        const ctx = document.getElementById(canvasId);
-        if (!ctx) return;
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.warn(`Canvas element with id '${canvasId}' not found`);
+            return null;
+        }
 
         // Destroy existing chart if it exists
         if (this.charts[canvasId]) {
             this.charts[canvasId].destroy();
         }
 
-        // Create new chart
-        this.charts[canvasId] = new Chart(ctx, config);
+        try {
+            this.charts[canvasId] = new Chart(canvas, config);
+            return this.charts[canvasId];
+        } catch (error) {
+            console.error(`Error creating chart ${canvasId}:`, error);
+            return null;
+        }
     }
 
     // Utility method to destroy all charts (useful for cleanup)

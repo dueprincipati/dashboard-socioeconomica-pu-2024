@@ -123,12 +123,14 @@ body {
 }
 
 /* Section content */
-.section-content {
+.section-content,
+.dashboard-section {
     display: none;
     animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.section-content.active {
+.section-content.active,
+.dashboard-section.active {
     display: block;
 }
 
@@ -201,7 +203,7 @@ body {
 }
 
 /* Internal tabs for sections */
-.tab-btn-demo, .tab-btn-lavoro, .tab-btn-contenzioso {
+.tab-btn, .tab-btn-demo, .tab-btn-lavoro, .tab-btn-contenzioso {
     position: relative;
     color: #94a3b8;
     transition: color 0.2s ease-in-out;
@@ -212,16 +214,16 @@ body {
     font-weight: 500;
 }
 
-.tab-btn-demo:hover, .tab-btn-lavoro:hover, .tab-btn-contenzioso:hover { 
+.tab-btn:hover, .tab-btn-demo:hover, .tab-btn-lavoro:hover, .tab-btn-contenzioso:hover { 
     color: #f8fafc; 
 }
 
-.tab-btn-demo.active {
+.tab-btn.active, .tab-btn-demo.active {
     color: #38bdf8; /* Blu per demografia */
     font-weight: 600;
 }
 
-.tab-btn-demo.active::after {
+.tab-btn.active::after, .tab-btn-demo.active::after {
     content: '';
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -230,39 +232,56 @@ body {
     border-radius: 2px;
 }
 
-.tab-btn-lavoro.active {
+#mercato_lavoro .tab-btn.active, .tab-btn-lavoro.active {
     color: #4ade80; /* Verde per mercato del lavoro */
     font-weight: 600;
 }
 
-.tab-btn-lavoro.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 3px;
+#mercato_lavoro .tab-btn.active::after, .tab-btn-lavoro.active::after {
     background-color: #4ade80;
-    border-radius: 2px;
 }
 
-.tab-btn-contenzioso.active {
+#ammortizzatori .tab-btn.active {
+    color: #f97316; /* Arancio per ammortizzatori */
+    font-weight: 600;
+}
+
+#ammortizzatori .tab-btn.active::after {
+    background-color: #f97316;
+}
+
+#pensioni .tab-btn.active {
+    color: #fb923c; /* Arancio chiaro per pensioni */
+    font-weight: 600;
+}
+
+#pensioni .tab-btn.active::after {
+    background-color: #fb923c;
+}
+
+#assistenza .tab-btn.active {
+    color: #2dd4bf; /* Teal per assistenza */
+    font-weight: 600;
+}
+
+#assistenza .tab-btn.active::after {
+    background-color: #2dd4bf;
+}
+
+#contenzioso .tab-btn.active, .tab-btn-contenzioso.active {
     color: #f87171; /* Rosso per contenzioso */
     font-weight: 600;
 }
 
-.tab-btn-contenzioso.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 3px;
+#contenzioso .tab-btn.active::after, .tab-btn-contenzioso.active::after {
     background-color: #f87171;
-    border-radius: 2px;
 }
 
-.demo-tab-content, .lavoro-tab-content, .contenzioso-tab-content { 
+.tab-content, .demo-tab-content, .lavoro-tab-content, .contenzioso-tab-content { 
     display: none; 
 }
 
-.demo-tab-content.active, .lavoro-tab-content.active, .contenzioso-tab-content.active { 
+.tab-content.active, .demo-tab-content.active, .lavoro-tab-content.active, .contenzioso-tab-content.active { 
     display: block; 
 }
 
@@ -458,7 +477,8 @@ body {
         display: none !important;
     }
     
-    .section-content {
+    .section-content,
+.dashboard-section {
         display: block !important;
         page-break-inside: avoid;
     }
@@ -582,4 +602,50 @@ body {
 ::-moz-selection {
     background: rgba(249, 115, 22, 0.3);
     color: var(--text-primary);
+}
+
+/* Comparative Badges & Components */
+.badge-up {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.badge-down {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-neutral {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.badge-recovered {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.3);
 }

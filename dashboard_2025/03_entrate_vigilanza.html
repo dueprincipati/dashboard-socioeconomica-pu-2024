@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Entrate e Vigilanza - Pesaro Urbino 2025</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .chart-container { position: relative; height: 40vh; width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn { position: relative; color: #94a3b8; transition: color 0.2s ease-in-out; padding-bottom: 8px; }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active { color: #10b981; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: #10b981; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+<div class="container mx-auto p-4 md:p-8 section-content active" id="entrate_vigilanza">
+<header class="mb-8 text-center">
+<div class="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-900/40 rounded-full border border-indigo-700/50">Edizione 2025 - CIV INPS</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-white">Entrate e Vigilanza</h1>
+<p class="text-lg text-slate-400 mt-1">Provincia di Pesaro Urbino (RSP 2025)</p>
+</header>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Entrate Contributive 2025</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">€790,8M</p>
+<p class="text-sm text-slate-500 mt-1">Riscossioni ordinarie Uniemens (+17,1%)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Recupero Crediti 2025</h3>
+<p class="text-4xl font-bold text-white mt-2">€58,6M</p>
+<p class="text-sm text-slate-500 mt-1">Fase amministrativa Uniemens</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Lavoratori Irregolari</h3>
+<p class="text-4xl font-bold text-orange-400 mt-2">2.572</p>
+<p class="text-sm text-slate-500 mt-1">Rilevati in vigilanza 2025</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Tasso DURC Irregolari</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">8,5%</p>
+<p class="text-sm text-slate-500 mt-1">In calo rispetto al 9,7% del 2024</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Evoluzione Riscossioni Ordinarie Uniemens (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Forte incremento del gettito contributivo ordinario che raggiunge i <strong class="text-emerald-400">790,76 milioni di euro nel 2025</strong> (+17,1% rispetto ai 675,25M € del 2024).</p>
+<div class="chart-container"><canvas id="chart-entrate-contributive"></canvas></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Vigilanza Ispettiva (2024 vs 2025)</h3>
+<p class="text-slate-400 mb-4">Nel 2025 concluse 153 ispezioni, con 134 aziende irregolari (87,6%) e 2.572 lavoratori coinvolti. Accertati oltre <strong class="text-slate-100">€ 6,2M di contributi</strong> e <strong class="text-slate-100">€ 3,7M di sanzioni</strong>.</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="chart-vigilanza-ispettiva"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">DURC Online: Trend Regolarità (2023-2025)</h3>
+<p class="text-slate-400 mb-4">A fronte di 23.186 DURC regolari emessi nel 2025, la quota di irregolarità scende all'<strong class="text-emerald-400">8,5%</strong>, segnalando una crescente conformità contributiva delle imprese.</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="chart-durc"></canvas></div>
+</div>
+</div>
+</div>
+</div>
+
+<script src="../js/data_2025.js"></script><script src="../js/main_2025.js"></script><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const d = new Dashboard();
+            d.currentSection = 'entrate_vigilanza';
+            d.loadSectionCharts('entrate_vigilanza');
+        });
+        </script></body>
+</html>

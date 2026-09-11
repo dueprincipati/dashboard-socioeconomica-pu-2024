@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contenzioso - Pesaro Urbino 2025</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .chart-container { position: relative; height: 40vh; width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn { position: relative; color: #94a3b8; transition: color 0.2s ease-in-out; padding-bottom: 8px; }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active { color: #ef4444; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: #ef4444; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+<div class="container mx-auto p-4 md:p-8 section-content active" id="contenzioso">
+<header class="mb-8 text-center">
+<div class="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-900/40 rounded-full border border-indigo-700/50">Edizione 2025 - CIV INPS</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-white">Contenzioso</h1>
+<p class="text-lg text-slate-400 mt-1">Provincia di Pesaro Urbino (RSP 2025)</p>
+</header>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Ricorsi Amministrativi 2025</h3>
+<p class="text-4xl font-bold text-white mt-2">408</p>
+<p class="text-sm text-slate-500 mt-1">Ricorsi pervenuti (in calo da 514 del 2024)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Giacenza Finale Ricorsi</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">38</p>
+<p class="text-sm text-slate-500 mt-1">Pendenze residue al 31/12/2025</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Favorevole INPS (Contributivo)</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">67,3%</p>
+<p class="text-sm text-slate-500 mt-1">Esito positivo sui giudizi ordinari definiti</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Giudizi ATP Invalidità</h3>
+<p class="text-4xl font-bold text-white mt-2">767</p>
+<p class="text-sm text-slate-500 mt-1">Accertamenti tecnici preventivi iniziati</p>
+</div>
+</div>
+<div class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700" id="tabs">
+<button class="tab-btn active" data-tab="amministrativo">Contenzioso Amministrativo</button>
+<button class="tab-btn" data-tab="giudiziario">Contenzioso Giudiziario</button>
+</div>
+<div class="mt-8" id="tab-contents">
+<div class="tab-content active space-y-6" id="amministrativo">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Flusso dei Ricorsi Amministrativi (2025)</h3>
+<p class="text-slate-400 mb-4">A fronte di 408 nuovi ricorsi pervenuti e 40 da lavorare a inizio anno, ne sono stati definiti complessivamente 410, riducendo la giacenza finale a soli <strong class="text-emerald-400">38 ricorsi pendenti</strong>.</p>
+<div class="chart-container"><canvas id="adminAppealsFlowChart"></canvas></div>
+</div>
+</div>
+<div class="tab-content space-y-6" id="giudiziario">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Esito dei Giudizi Definiti per Tipologia (2025)</h3>
+<p class="text-slate-400 mb-4">Nei giudizi ordinari l'esito favorevole all'Istituto raggiunge il 67,3% nella materia contributiva, mentre negli ATP di invalidità civile l'esito favorevole all'utente è al 51,6%.</p>
+<div class="chart-container"><canvas id="judicialOutcomesChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Giudizi Ordinari Iniziati per Materia (2025)</h3>
+<div class="chart-container"><canvas id="judicialCasesBySubjectChart"></canvas></div>
+</div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Andamento delle Pendenze Giudiziarie (Inizio vs Fine 2025)</h3>
+<div class="chart-container"><canvas id="pendingCasesChart"></canvas></div>
+</div>
+</div>
+</div>
+</div>
+
+<script src="../js/data_2025.js"></script><script src="../js/main_2025.js"></script><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const d = new Dashboard();
+            d.currentSection = 'contenzioso';
+            d.loadSectionCharts('contenzioso');
+        });
+        </script></body>
+</html>

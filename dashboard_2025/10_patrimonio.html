@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Patrimonio a Reddito - Pesaro Urbino 2025</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .chart-container { position: relative; height: 40vh; width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn { position: relative; color: #94a3b8; transition: color 0.2s ease-in-out; padding-bottom: 8px; }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active { color: #64748b; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: #64748b; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+<div class="container mx-auto p-4 md:p-8 section-content active" id="patrimonio">
+<header class="mb-8 text-center">
+<div class="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-900/40 rounded-full border border-indigo-700/50">Edizione 2025 - CIV INPS</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-white">Patrimonio a Reddito</h1>
+<p class="text-lg text-slate-400 mt-1">Provincia di Pesaro Urbino (RSP 2025)</p>
+</header>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Consistenza Patrimoniale 2025</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">€13,84M</p>
+<p class="text-sm text-slate-500 mt-1">Valore patrimonio da reddito costante</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Numero Fabbricati</h3>
+<p class="text-4xl font-bold text-white mt-2">4</p>
+<p class="text-sm text-slate-500 mt-1">Unità immobiliari gestite</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Unità Agricole</h3>
+<p class="text-4xl font-bold text-white mt-2">0</p>
+<p class="text-sm text-slate-500 mt-1">Nessun terreno agricolo da reddito</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Valore Patrimonio Immobiliare da Reddito (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Il valore del patrimonio a Pesaro Urbino rimane costante a <strong class="text-emerald-400">13.839.976,40 €</strong>, costituendo una quota rilevante dell'intero patrimonio regionale delle Marche.</p>
+<div class="chart-container"><canvas id="chart-patrimonio-valore"></canvas></div>
+</div>
+</div>
+</div>
+
+<script src="../js/data_2025.js"></script><script src="../js/main_2025.js"></script><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const d = new Dashboard();
+            d.currentSection = 'patrimonio';
+            d.loadSectionCharts('patrimonio');
+        });
+        </script></body>
+</html>

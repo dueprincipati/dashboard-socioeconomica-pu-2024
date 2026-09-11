@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Prestazioni Assistenziali e Sociali - Pesaro Urbino 2025</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .chart-container { position: relative; height: 40vh; width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn { position: relative; color: #94a3b8; transition: color 0.2s ease-in-out; padding-bottom: 8px; }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active { color: #eab308; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: #eab308; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+<div class="container mx-auto p-4 md:p-8 section-content active" id="assistenza">
+<header class="mb-8 text-center">
+<div class="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-900/40 rounded-full border border-indigo-700/50">Edizione 2025 - CIV INPS</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-white">Prestazioni Assistenziali e Sociali</h1>
+<p class="text-lg text-slate-400 mt-1">Provincia di Pesaro Urbino (RSP 2025)</p>
+</header>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Nuclei Assegno Unico</h3>
+<p class="text-4xl font-bold text-white mt-2">37.788</p>
+<p class="text-sm text-slate-500 mt-1">Nuclei beneficiari a domanda (2025)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Prestazioni Inv. Civile Liquidate</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">4.249</p>
+<p class="text-sm text-slate-500 mt-1">In forte aumento (+20% vs 2024)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Tempo Medio Inv. Civile</h3>
+<p class="text-4xl font-bold text-white mt-2">157 gg</p>
+<p class="text-sm text-slate-500 mt-1">In miglioramento rispetto a 162 gg 2024</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Assegno Inclusione (ADI)</h3>
+<p class="text-4xl font-bold text-sky-400 mt-2">1.557</p>
+<p class="text-sm text-slate-500 mt-1">Domande accolte nel 2025</p>
+</div>
+</div>
+<div class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700" id="tabs">
+<button class="tab-btn active" data-tab="invalidita">Invalidità Civile</button>
+<button class="tab-btn" data-tab="sostegno">Sostegno al Reddito e Famiglia</button>
+</div>
+<div class="mt-8" id="tab-contents">
+<div class="tab-content active space-y-6" id="invalidita">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Prestazioni Vigenti per Genere e Tipologia (2025)</h3>
+<p class="text-slate-400 mb-4">L'indennità di accompagnamento rappresenta il trattamento principale con 16.524 beneficiari (10.239 donne e 6.285 uomini).</p>
+<div class="chart-container"><canvas id="prestazioniVigentiChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Evoluzione Prestazioni Liquidate (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Netto incremento nel 2025 con 4.249 prestazioni liquidate (3.488 indennità e 761 pensioni).</p>
+<div class="chart-container"><canvas id="liquidazioniTrendChart"></canvas></div>
+</div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Tempi Medi di Definizione: Sanitaria e Amministrativa (Giorni, 2025)</h3>
+<p class="text-slate-400 mb-4">I tempi medi complessivi scendono a 157 giorni (139 gg per la fase sanitaria e 18 gg per quella amministrativa).</p>
+<div class="chart-container"><canvas id="tempiDefinizioneChart"></canvas></div>
+</div>
+<!-- NUOVA TAVOLA 48 RSP 2025 -->
+<div class="card border border-indigo-500/40 bg-slate-900/90">
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-0.5 text-xs font-bold bg-indigo-600 text-white rounded">NOVITÀ TAVOLA 48</span>
+<h3 class="font-bold text-xl text-indigo-200">Prestazioni per Fasce di Liquidazione - Tempi di Accoglimento (Tavola 48)</h3>
+</div>
+<p class="text-slate-400 mb-4">Distribuzione dettagliata dei tempi di accoglimento per 8 scaglioni temporali: a Pesaro Urbino la maggior concentrazione (31,9%) ricade nella fascia tra 181 e 360 giorni, seguita dal 19,8% tra 121 e 180 giorni.</p>
+<div class="chart-container"><canvas id="fasceLiquidazioneChart"></canvas></div>
+</div>
+</div>
+<div class="tab-content space-y-6" id="sostegno">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Misure di Sostegno al Reddito (ADI e SFL 2025)</h3>
+<p class="text-slate-400 mb-4">Nel 2025 accolte 1.557 domande di Assegno di Inclusione (ADI) e 149 di Supporto Formazione e Lavoro (SFL).</p>
+<div class="chart-container"><canvas id="sostegnoRedditoChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Nuclei Beneficiari di Assegno Unico Universale</h3>
+<p class="text-slate-400 mb-4">I nuclei familiari beneficiari di AUU a domanda a Pesaro Urbino si attestano a 37.788 nel 2025.</p>
+<div class="chart-container"><canvas id="assegnoUnicoChart"></canvas></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script src="../js/data_2025.js"></script><script src="../js/main_2025.js"></script><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const d = new Dashboard();
+            d.currentSection = 'assistenza';
+            d.loadSectionCharts('assistenza');
+        });
+        </script></body>
+</html>

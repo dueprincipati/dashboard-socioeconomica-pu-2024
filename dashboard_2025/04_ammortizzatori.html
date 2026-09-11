@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ammortizzatori Sociali - Pesaro Urbino 2025</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .chart-container { position: relative; height: 40vh; width: 100%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn { position: relative; color: #94a3b8; transition: color 0.2s ease-in-out; padding-bottom: 8px; }
+        .tab-btn:hover { color: #f8fafc; }
+        .tab-btn.active { color: #a855f7; font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background-color: #a855f7; }
+        .card { background-color: #1e293b; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #334155; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300">
+<div class="container mx-auto p-4 md:p-8 section-content active" id="ammortizzatori">
+<header class="mb-8 text-center">
+<div class="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-indigo-400 uppercase bg-indigo-900/40 rounded-full border border-indigo-700/50">Edizione 2025 - CIV INPS</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-white">Ammortizzatori Sociali</h1>
+<p class="text-lg text-slate-400 mt-1">Provincia di Pesaro Urbino (RSP 2025)</p>
+</header>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Domande NASpI 2025</h3>
+<p class="text-4xl font-bold text-white mt-2">16.370</p>
+<p class="text-sm text-slate-500 mt-1">Domande accolte nel 2025</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">NASpI Accolte in 15gg</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">89,3%</p>
+<p class="text-sm text-slate-500 mt-1">Performance 2025 (in aumento)</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Tempi Erogazione CIGO</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">7 gg</p>
+<p class="text-sm text-slate-500 mt-1">Tempo medio domanda/autorizzazione</p>
+</div>
+<div class="card">
+<h3 class="text-slate-400 font-semibold text-md">Tempi Erogazione FIS</h3>
+<p class="text-4xl font-bold text-emerald-400 mt-2">29 gg</p>
+<p class="text-sm text-slate-500 mt-1">Netto recupero da 52 gg del 2024</p>
+</div>
+</div>
+<div class="flex flex-wrap justify-center gap-8 mb-6 border-b border-slate-700" id="tabs">
+<button class="tab-btn active" data-tab="cessazione">Cessazione Rapporto (NASpI)</button>
+<button class="tab-btn" data-tab="sospensione">Sospensione Rapporto (CIG)</button>
+</div>
+<div class="mt-8" id="tab-contents">
+<div class="tab-content active space-y-6" id="cessazione">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Domande NASpI Accolte per Genere (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Nel 2025 le domande NASpI accolte si stabilizzano a 16.370 (9.352 donne, pari al 57,1%, e 7.018 uomini).</p>
+<div class="chart-container"><canvas id="naspiGenderChart"></canvas></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Beneficiari per Tipologia di Prestazione (2025)</h3>
+<p class="text-slate-400 mb-4">La NASpI costituisce il 95,0% dei trattamenti di disoccupazione (20.941 beneficiari), affiancata da disoccupazione agricola (909) e Dis-coll (202).</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="benefitsTypeChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Tempi di Accoglimento NASpI (2025)</h3>
+<p class="text-slate-400 mb-4">L'<strong class="text-emerald-400">89,3%</strong> delle domande NASpI viene accolto entro 15 giorni dalla presentazione, superando la performance dell'anno precedente.</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="naspiTimingChart"></canvas></div>
+</div>
+</div>
+</div>
+<div class="tab-content space-y-6" id="sospensione">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Ore CIG Autorizzate per Tipologia (2022-2025)</h3>
+<p class="text-slate-400 mb-4">Distribuzione delle ore di cassa integrazione guadagni ordinarie (CIGO), straordinarie (CIGS) e Fondi di Solidarietà.</p>
+<div class="chart-container"><canvas id="cigHoursChart"></canvas></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Beneficiari CIG per Strumento (2025)</h3>
+<p class="text-slate-400 mb-4">Nel 2025 la CIGO conta 6.454 beneficiari provinciali (73,2% del totale), seguita da CIGS (2.261) e Fondi di Solidarietà (103), per complessivi 8.818 lavoratori assistiti.</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="cigBeneficiariesChart"></canvas></div>
+</div>
+<div class="card">
+<h3 class="font-bold text-xl text-slate-200 mb-4">Tempi Medi di Erogazione CIGO e FIS (2025)</h3>
+<p class="text-slate-400 mb-4">Pesaro Urbino registra tempi di autorizzazione rapidissimi: <strong class="text-emerald-400">7 giorni per CIGO</strong> (vs 20 gg media Italia, 13 gg Marche) e <strong class="text-emerald-400">29 giorni per FIS</strong> (vs 48 gg media Italia, 32 gg Marche).</p>
+<div class="chart-container" style="height: 30vh;"><canvas id="erogationTimingChart"></canvas></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script src="../js/data_2025.js"></script><script src="../js/main_2025.js"></script><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const d = new Dashboard();
+            d.currentSection = 'ammortizzatori';
+            d.loadSectionCharts('ammortizzatori');
+        });
+        </script></body>
+</html>
