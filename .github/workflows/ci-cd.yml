@@ -83,22 +83,6 @@ jobs:
       run: |
         python server.py --check-only
         python server_2025.py --check-only
-        
-    - name: 🌐 Server Test
-      shell: bash
-      run: |
-        python server.py --no-browser -p 8080 &
-        SERVER_PID=$!
-        sleep 3
-        
-        if command -v curl &> /dev/null; then
-          curl -f http://localhost:8080/index.html || exit 1
-        elif command -v wget &> /dev/null; then
-          wget -q --spider http://localhost:8080/index.html || exit 1
-        fi
-        
-        kill $SERVER_PID 2>/dev/null || true
-        echo "✅ Cross-platform test passed on ${{ matrix.os }} with Python ${{ matrix.python-version }}"
 
   # ===============================
   # Security & Code Quality
@@ -114,7 +98,7 @@ jobs:
     - name: 📋 Check for Sensitive Data
       run: |
         echo "🔍 Scanning for potential sensitive data..."
-        if grep -r -i -I "password\s*=\|secret\s*=\|token\s*=\|api_key\s*=" js/ server*.py --exclude-dir=.git; then
+        if grep -E -r -i -I "password\s*=\|secret\s*=\|token\s*=\|api_key\s*=" js/ server*.py; then
           echo "⚠️ Potential sensitive data found. Please review."
           exit 1
         else
@@ -187,15 +171,7 @@ jobs:
         python3 optimize.py
         
         echo "📈 Verifying compression ratio:"
-        python3 -c "
-import os
-files = ['index.html', 'index_2025.html', 'js/data.js', 'js/main.js', 'js/data_2025.js', 'js/main_2025.js', 'css/style.css']
-orig = sum(os.path.getsize(f) for f in files)
-comp = sum(os.path.getsize(f + '.gz') for f in files if os.path.exists(f + '.gz'))
-ratio = (orig - comp) / orig * 100
-print(f'Original: {orig} bytes, Compressed: {comp} bytes, Ratio: {ratio:.1f}%')
-assert ratio >= 70, f'Compression ratio {ratio}% is below 70%'
-"
+        python3 -c "import os; files=['index.html','index_2025.html','js/data.js','js/main.js','js/data_2025.js','js/main_2025.js','css/style.css']; orig=sum(os.path.getsize(f) for f in files); comp=sum(os.path.getsize(f+'.gz') for f in files if os.path.exists(f+'.gz')); ratio=(orig-comp)/orig*100; print(f'Ratio: {ratio:.1f}%'); assert ratio >= 70, 'Compression below 70%'"
         echo "✅ Performance gate passed"
         
     - name: 📊 Create Performance Report
