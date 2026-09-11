@@ -30,15 +30,17 @@ class DashboardHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         super().end_headers()
     
+    default_page = 'index.html'
+    
     def do_OPTIONS(self):
         """Gestisce le richieste OPTIONS per CORS"""
         self.send_response(200)
         self.end_headers()
     
     def do_GET(self):
-        """Gestisce le richieste GET con redirect automatico all'index"""
-        if self.path == '/':
-            self.path = '/index.html'
+        """Gestisce le richieste GET con redirect automatico all'index dell'edizione attiva"""
+        if self.path == '/' or self.path == '':
+            self.path = '/' + self.default_page
         return super().do_GET()
     
     def log_message(self, format, *args):
@@ -90,11 +92,14 @@ def open_browser(url, delay=1.5):
         print(f"   Apri manualmente: {url}")
 
 def check_dashboard_files():
-    """Verifica che tutti i file necessari siano presenti"""
+    """Verifica che tutti i file necessari siano presenti per entrambe le edizioni"""
     required_files = [
         'index.html',
         'js/data.js',
         'js/main.js',
+        'index_2025.html',
+        'js/data_2025.js',
+        'js/main_2025.js',
         'css/style.css'
     ]
     
@@ -107,40 +112,41 @@ def check_dashboard_files():
         print("❌ File mancanti per la dashboard:")
         for file in missing_files:
             print(f"   - {file}")
-        print("\nAssicurati di essere nella directory corretta e che tutti i file siano stati creati.")
+        print("\nAssicurati di essere nella directory corretta e che tutti i file siano presenti.")
         return False
     
-    print("✅ Tutti i file della dashboard sono presenti")
+    print("✅ Tutti i file delle edizioni 2024 e 2025 sono presenti")
     return True
 
-def print_dashboard_info(port, auto_open=True):
-    """Stampa le informazioni della dashboard"""
-    url = f"http://localhost:{port}"
+def print_dashboard_info(port, auto_open=True, year='2024'):
+    """Stampa le informazioni delle dashboard"""
+    url_2024 = f"http://localhost:{port}/index.html"
+    url_2025 = f"http://localhost:{port}/index_2025.html"
+    active_url = url_2025 if year == '2025' else url_2024
     
     print("\n" + "="*60)
-    print("🏛️  DASHBOARD SOCIO-ECONOMICA PESARO E URBINO 2024")
+    print("🏛️  DASHBOARD SOCIO-ECONOMICA PESARO E URBINO (2024 & 2025)")
     print("="*60)
     print(f"📊 Server avviato sulla porta: {port}")
-    print(f"🌐 URL locale: {url}")
-    print(f"📁 Directory: {os.getcwd()}")
+    print(f"🌐 Edizione 2024: {url_2024}")
+    print(f"🌐 Edizione 2025: {url_2025}")
+    print(f"📁 Directory:     {os.getcwd()}")
     print("="*60)
     
     if auto_open:
-        print("🚀 Apertura automatica del browser in corso...")
+        print(f"🚀 Apertura automatica del browser (Edizione {year}) su: {active_url}")
     else:
-        print("💡 Apri il browser e naviga all'URL sopra indicato")
+        print("💡 Apri il browser e naviga a uno degli URL sopra indicati")
     
     print("\n📋 COMANDI DISPONIBILI:")
     print("   • Ctrl+C     - Ferma il server")
     print("   • F5         - Ricarica la pagina")
     print("   • F12        - Apri DevTools")
     
-    print("\n🎯 FUNZIONALITÀ DASHBOARD:")
-    print("   • 10 sezioni tematiche interattive")
-    print("   • Grafici Chart.js responsive")
-    print("   • Tema dark mode professionale")
-    print("   • Zoom delle card per dettagli")
-    print("   • Navigazione a schede fluida")
+    print("\n🎯 EDIZIONI DISPONIBILI:")
+    print("   • Edizione 2024: Dati RSP 2024 (index.html)")
+    print("   • Edizione 2025: Dati RSP 2025 & Tavola 48 (index_2025.html)")
+    print("   • Moduli Standalone in dashboard/ e dashboard_2025/")
     print("="*60)
 
 def main():
@@ -150,14 +156,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Esempi d'uso:
-  python server.py                    # Avvia sulla prima porta libera (default 8000+)
+  python server.py                    # Avvia l'Edizione 2024 (default 8000+)
+  python server.py --2025            # Avvia l'Edizione 2025
+  python server.py -y 2025           # Avvia l'Edizione 2025
   python server.py -p 8080           # Avvia sulla porta 8080
   python server.py --no-browser      # Avvia senza aprire il browser
-  python server.py -p 3000 --no-browser  # Porta personalizzata senza browser
 
 Note:
   - Il server si avvia nella directory corrente
-  - Assicurati che index.html sia presente
+  - Edizione 2024: index.html
+  - Edizione 2025: index_2025.html
   - Usa Ctrl+C per fermare il server
         """
     )
@@ -175,12 +183,43 @@ Note:
     )
     
     parser.add_argument(
+        '-y', '--year',
+        choices=['2024', '2025'],
+        default='2024',
+        help='Edizione della dashboard da aprire automaticamente (2024 o 2025, default: 2024)'
+    )
+    
+    parser.add_argument(
+        '--2025',
+        dest='is_2025',
+        action='store_true',
+        help='Scorciatoia per avviare direttamente l\'edizione 2025'
+    )
+    
+    parser.add_argument(
+        '--2024',
+        dest='is_2024',
+        action='store_true',
+        help='Scorciatoia per avviare direttamente l\'edizione 2024'
+    )
+    
+    parser.add_argument(
         '--check-only',
         action='store_true',
         help='Verifica solo la presenza dei file senza avviare il server'
     )
     
     args = parser.parse_args()
+    
+    # Gestione scorciatoie --2025 e --2024
+    if args.is_2025:
+        args.year = '2025'
+    elif args.is_2024:
+        args.year = '2024'
+    
+    # Imposta la pagina predefinita del server in base all'anno selezionato
+    target_page = "index_2025.html" if args.year == "2025" else "index.html"
+    DashboardHTTPRequestHandler.default_page = target_page
     
     # Verifica i file della dashboard
     if not check_dashboard_files():
@@ -206,13 +245,13 @@ Note:
     try:
         with socketserver.TCPServer(("localhost", port), handler) as httpd:
             # Mostra le informazioni
-            print_dashboard_info(port, not args.no_browser)
+            print_dashboard_info(port, not args.no_browser, year=args.year)
             
             # Avvia il browser in un thread separato
             if not args.no_browser:
                 browser_thread = threading.Thread(
                     target=open_browser,
-                    args=(f"http://localhost:{port}",),
+                    args=(f"http://localhost:{port}/{target_page}",),
                     daemon=True
                 )
                 browser_thread.start()

@@ -4,16 +4,25 @@
 
 ## ⚡ Avvio Immediato
 
-```bash
-# 1. Clone del repository
-git clone https://github.com/dueprincipati/dashboard-socioeconomica-pu-2024.git
-cd dashboard-socioeconomica-pu-2024
+Il repository include le edizioni separate e complete per entrambi gli anni:
 
-# 2. Avvio della dashboard
+### 🏛️ Avvio Edizione 2025 (Dati Rendiconto 2025 & Tavola 48)
+```bash
+# Metodo 1: Script dedicato
+python3 server_2025.py
+
+# Metodo 2: Flag --2025
+python3 server.py --2025
+```
+**✅ Si apre automaticamente su: `http://localhost:8000/index_2025.html`**
+
+---
+
+### 🏛️ Avvio Edizione 2024 (Dati Rendiconto 2024)
+```bash
 python3 server.py
 ```
-
-**✅ La dashboard si aprirà automaticamente su http://localhost:8000**
+**✅ Si apre automaticamente su: `http://localhost:8000/index.html`**
 
 ---
 
@@ -50,20 +59,24 @@ python3 server.py
 ## 🛠️ Comandi Utili
 
 ```bash
-# Verifica integrità file
+# Avvio Edizione 2025
+python3 server_2025.py
+python3 server.py --2025
+
+# Avvio Edizione 2024
+python3 server.py
+
+# Verifica integrità file di entrambe le edizioni
 python3 server.py --check-only
 
 # Porta personalizzata  
-python3 server.py -p 3000
+python3 server.py --2025 -p 3000
 
 # Modalità headless (senza browser)
-python3 server.py --no-browser
+python3 server.py --2025 --no-browser
 
-# Ottimizzazione performance
+# Ottimizzazione performance (compressione gzip per 2024 e 2025)
 python3 optimize.py
-
-# Aggiornamento dati (futuro)
-python3 scripts/update_data.py nuovo_rsp_file.txt
 ```
 
 ---

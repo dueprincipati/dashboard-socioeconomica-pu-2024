@@ -5,6 +5,26 @@ Tutte le modifiche notevoli al progetto saranno documentate in questo file.
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/),
 e questo progetto aderisce al [Semantic Versioning](https://semver.org/lang/it/).
 
+## [2.0.0] - 2025-09-11
+
+### ✨ Aggiunto
+- **Edizione 2025 Completa**:
+  - Nuova dashboard principale (`index_2025.html`) basata sul Rendiconto Sociale 2025 e Tavola 48.
+  - Layer dati dedicati (`js/data_2025.js`) e logica applicativa (`js/main_2025.js`).
+  - 10 moduli tematici standalone completamente funzionanti in `dashboard_2025/`.
+  - Conformità 100% verificata con la Nota di Sintesi provinciale (16 punti di controllo superati).
+- **Miglioramenti al Server**:
+  - Supporto per la selezione dell'edizione tramite `python3 server.py --2025` o `python3 server.py -y 2025`.
+  - Nuovo launcher dedicato `server_2025.py` per avvio istantaneo dell'Edizione 2025 con un singolo comando.
+  - Routing dinamico: se viene selezionata l'edizione 2025, la radice `/` reindirizza a `index_2025.html`.
+  - Verifica automatica dell'integrità dei file per entrambe le edizioni (`--check-only`).
+- **Ottimizzazione e Documentazione**:
+  - `README.md` interamente riscritto con documentazione dettagliata per entrambe le edizioni e matrice di verifica con la Nota di Sintesi.
+  - `QUICKSTART.md` aggiornato con le istruzioni d'avvio per 2024 e 2025.
+  - Pipeline `optimize.py` aggiornata per comprimere esclusivamente i file attivi di entrambe le edizioni.
+
+---
+
 ## [1.0.0] - 2024-12-01
 
 ### ✨ Aggiunto
