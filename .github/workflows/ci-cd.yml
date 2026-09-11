@@ -8,6 +8,10 @@ on:
   release:
     types: [published]
 
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: 'utf-8'
+
 jobs:
   # ===============================
   # Quality Assurance & Testing
@@ -80,6 +84,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         
     - name: 🔍 File Integrity Check
+      shell: bash
       run: |
         python server.py --check-only
         python server_2025.py --check-only

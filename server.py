@@ -14,6 +14,14 @@ import argparse
 import threading
 import time
 
+# Assicura compatibilità output UTF-8 su Windows
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 class DashboardHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     """Handler personalizzato per la dashboard con CORS e logging migliorato"""
     
